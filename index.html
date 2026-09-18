@@ -1,11 +1,97 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0B0F14" />
   <title>Panda Kick</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css" />
 </head>
-<body style="background:#0B0F14;color:#00E0A4;font-family:sans-serif;text-align:center;padding-top:120px;">
-  <h1>🐼 PANDA KICK</h1>
-  <p style="color:#F5F7FA;">Setup works. Ready to build.</p>
+<body>
+
+  <!-- ============ HOME SCREEN ============ -->
+  <section id="screen-home" class="screen active">
+    <div class="pitch-bg"></div>
+    <div class="home-wrap">
+      <div class="logo-mark">⚽</div>
+      <h1 class="brand">PANDA KICK</h1>
+      <p class="tagline">Test your football knowledge.</p>
+
+      <div class="difficulty-picker">
+        <button class="diff-btn" data-diff="easy">
+          <span class="diff-label">EASY</span>
+          <span class="diff-sub">Casual fan</span>
+        </button>
+        <button class="diff-btn" data-diff="pro">
+          <span class="diff-label">PRO</span>
+          <span class="diff-sub">Real football head</span>
+        </button>
+      </div>
+
+      <div class="home-stats">
+        <div class="stat">
+          <div class="stat-num" id="home-streak">0</div>
+          <div class="stat-lbl">🔥 Streak</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="home-best">0/20</div>
+          <div class="stat-lbl">🏆 Best</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GAME SCREEN ============ -->
+  <section id="screen-game" class="screen">
+    <div class="pitch-bg"></div>
+
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="badge" id="current-diff">EASY</span>
+        <button class="diff-switch" id="diff-switch" title="Switch difficulty">⇄</button>
+      </div>
+      <div class="topbar-right">
+        <span class="score" id="score-display">0</span>
+        <span class="score-sep">/</span>
+        <span class="q-count" id="q-counter">1/20</span>
+      </div>
+    </header>
+
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+
+    <div class="question-wrap">
+      <p class="category-tag" id="category-tag">WORLD CUP</p>
+      <h2 class="question-text" id="question-text">Loading…</h2>
+    </div>
+
+    <div class="answers" id="answers"></div>
+
+    <div class="bottom-bar">
+      <button class="next-btn" id="next-btn" disabled>NEXT →</button>
+    </div>
+  </section>
+
+  <!-- ============ END SCREEN ============ -->
+  <section id="screen-end" class="screen">
+    <div class="pitch-bg"></div>
+    <div class="net-overlay"></div>
+    <div class="end-wrap">
+      <div class="end-label">FINAL SCORE</div>
+      <div class="end-score" id="final-score">0/20</div>
+      <div class="end-msg" id="end-msg">Good effort.</div>
+
+      <div class="end-actions">
+        <button class="btn-primary" id="play-again">PLAY AGAIN</button>
+        <button class="btn-ghost" id="back-home">HOME</button>
+      </div>
+    </div>
+  </section>
+
+  <audio id="sfx-correct"  preload="none"></audio>
+  <audio id="sfx-wrong"    preload="none"></audio>
+  <audio id="sfx-whistle"  preload="none"></audio>
+  <audio id="sfx-ambience" preload="none" loop></audio>
+
+  <script type="module" src="app.js"></script>
 </body>
-</html>
+  </html>
