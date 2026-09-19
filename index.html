@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#050608" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Panda Kick" />
+  <link rel="manifest" href="manifest.json" />
+  <title>Panda Kick</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- SPLASH -->
+  <div id="splash" class="splash">
+    <div class="splash-glow"></div>
+    <div class="splash-inner">
+      <div class="splash-ball">⚽</div>
+      <div class="splash-brand">PANDA KICK</div>
+      <div class="splash-tag">Test your football knowledge.</div>
+      <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- ONBOARDING -->
+  <section id="screen-onboard" class="screen">
+    <div class="pitch-bg"></div>
+    <div class="onboard-wrap">
+      <div class="onboard-step" data-step="1">
+        <div class="onboard-badge float">🐼</div>
+        <h2 class="onboard-title">Welcome</h2>
+        <p class="onboard-sub">What should we call you?</p>
+        <input id="input-name" class="input" type="text" placeholder="Enter your name" maxlength="16" autocomplete="off" />
+        <p class="input-hint" id="name-hint"></p>
+        <button class="btn-primary" id="onboard-next-1">CONTINUE →</button>
+      </div>
+      <div class="onboard-step" data-step="2" style="display:none;">
+        <div class="onboard-badge float">🌍</div>
+        <h2 class="onboard-title">Where you from?</h2>
+        <p class="onboard-sub">Pick your country</p>
+        <select id="input-country" class="input select">
+          <option value="">Select country…</option>
+          <option>Nigeria</option><option>Ghana</option><option>Kenya</option>
+          <option>South Africa</option><option>Egypt</option><option>Morocco</option>
+          <option>Senegal</option><option>Ivory Coast</option><option>Cameroon</option>
+          <option>England</option><option>Spain</option><option>France</option>
+          <option>Germany</option><option>Italy</option><option>Portugal</option>
+          <option>Netherlands</option><option>Belgium</option><option>Croatia</option>
+          <option>Brazil</option><option>Argentina</option><option>Uruguay</option>
+          <option>Mexico</option><option>Colombia</option><option>Chile</option>
+          <option>United States</option><option>Canada</option>
+          <option>India</option><option>Japan</option><option>South Korea</option>
+          <option>China</option><option>Indonesia</option><option>Australia</option>
+          <option>Saudi Arabia</option><option>Qatar</option><option>UAE</option>
+          <option>Other</option>
+        </select>
+        <button class="btn-primary" id="onboard-next-2">LET'S GO →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGN UP -->
+  <section id="screen-signup" class="screen">
+    <div class="pitch-bg"></div>
+    <div class="auth-wrap">
+      <div class="auth-logo float">🐼</div>
+      <h2 class="auth-title">Create Account</h2>
+      <p class="auth-sub">Pick a username and 4-digit PIN. No email needed.</p>
+      <div class="auth-form">
+        <input id="signup-username" class="input" type="text" placeholder="Username (3-20 chars)" maxlength="20" autocomplete="off" />
+        <input id="signup-pin" class="input" type="tel" placeholder="4-digit PIN" maxlength="4" inputmode="numeric" />
+        <input id="signup-country" class="input" type="text" placeholder="Country (optional)" maxlength="30" autocomplete="off" />
+        <p class="input-hint" id="signup-hint"></p>
+        <button class="btn-primary" id="signup-btn">CREATE ACCOUNT</button>
+      </div>
+      <p class="auth-switch">Already have an account? <a id="goto-login">Sign In</a></p>
+    </div>
+  </section>
+
+  <!-- SIGN IN -->
+  <section id="screen-signin" class="screen">
+    <div class="pitch-bg"></div>
+    <div class="auth-wrap">
+      <div class="auth-logo float">⚽</div>
+      <h2 class="auth-title">Welcome Back</h2>
+      <p class="auth-sub">Enter your username and PIN to continue.</p>
+      <div class="auth-form">
+        <input id="signin-username" class="input" type="text" placeholder="Username" maxlength="20" autocomplete="off" />
+        <input id="signin-pin" class="input" type="tel" placeholder="4-digit PIN" maxlength="4" inputmode="numeric" />
+        <p class="input-hint" id="signin-hint"></p>
+        <button class="btn-primary" id="signin-btn">SIGN IN</button>
+      </div>
+      <p class="auth-switch">New here? <a id="goto-signup">Create Account</a></p>
+    </div>
+  </section>
+
+  <!-- HOME -->
+  <section id="screen-home" class="screen">
+    <div class="pitch-bg"></div>
+    <div class="pitch-glow"></div>
+
+    <header class="home-topbar">
+      <div class="mini-brand">⚽ PANDA KICK</div>
+      <div class="home-topbar-right">
+        <button class="bell-btn" id="bell-btn">
+          🔔
+          <span class="bell-badge" id="bell-badge" style="display:none;">0</span>
+        </button>
+        <button class="coin-btn" id="coin-btn">
+          <span class="coin-icon">💰</span>
+          <span class="coin-count" id="coin-count">0</span>
+        </button>
+        <button class="avatar-btn" id="avatar-btn">
+          <span id="avatar-initial">?</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="home-wrap">
+      <div class="logo-mark">⚽</div>
+      <h1 class="brand">PANDA KICK</h1>
+      <p class="tagline">Test your football knowledge.</p>
+
+      <div class="home-quick">
+        <button class="quick-btn" id="daily-btn">
+          <span class="quick-icon">🎯</span>
+          <span class="quick-lbl">Daily</span>
+        </button>
+        <button class="quick-btn" id="leaderboard-btn">
+          <span class="quick-icon">🏆</span>
+          <span class="quick-lbl">Ranks</span>
+        </button>
+        <button class="quick-btn" id="store-btn">
+          <span class="quick-icon">🛒</span>
+          <span class="quick-lbl">Store</span>
+        </button>
+        <button class="quick-btn" id="settings-btn">
+          <span class="quick-icon">⚙️</span>
+          <span class="quick-lbl">Settings</span>
+        </button>
+      </div>
+
+      <div class="difficulty-picker">
+        <button class="diff-btn" data-diff="easy">
+          <span class="diff-label">EASY</span>
+          <span class="diff-sub">Casual fan</span>
+        </button>
+        <button class="diff-btn" data-diff="pro">
+          <span class="diff-label">PRO</span>
+          <span class="diff-sub">Real football head</span>
+        </button>
+      </div>
+
+      <button class="category-pick-btn" id="category-pick-btn">📂 Pick Category →</button>
+
+      <div class="home-stats">
+        <div class="stat">
+          <div class="stat-num" id="home-streak">0</div>
+          <div class="stat-lbl">🔥 Streak</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="home-best">0/20</div>
+          <div class="stat-lbl">🏆 Best</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⬇️ CONTINUE WITH CHUNK 2 ⬇️ -->
+  <!-- PROFILE -->
+<section id="screen-profile" class="screen">
+  <div class="pitch-bg"></div>
+  <header class="topbar">
+    <button class="back-btn" id="profile-back">←</button>
+    <span class="topbar-title">PROFILE</span>
+    <span></span>
+  </header>
+
+  <div class="profile-wrap">
+    <div class="profile-avatar-wrap">
+      <div class="profile-avatar" id="profile-avatar"><span id="profile-initial">?</span></div>
+      <div class="profile-badge" id="profile-premium-badge" style="display:none;">💎</div>
+    </div>
+    <h2 class="profile-name" id="profile-name">Player</h2>
+    <p class="profile-country" id="profile-country">🌍 Country</p>
+
+    <div class="profile-stats">
+      <div class="pstat">
+        <div class="pstat-num" id="profile-streak">0</div>
+        <div class="pstat-lbl">🔥 Streak</div>
+      </div>
+      <div class="pstat">
+        <div class="pstat-num" id="profile-best">0/20</div>
+        <div class="pstat-lbl">🏆 Best</div>
+      </div>
+      <div class="pstat">
+        <div class="pstat-num" id="profile-games">0</div>
+        <div class="pstat-lbl">🎮 Games</div>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="premium-btn-profile">💎 GO PREMIUM</button>
+    <button class="btn-ghost" id="edit-profile">⚙️ EDIT PROFILE</button>
+    <button class="btn-ghost" id="trophy-btn">🏆 TROPHY ROOM</button>
+    <button class="btn-ghost" id="friends-btn">⚔️ FRIENDS</button>
+  </div>
+</section>
+
+<!-- PROFILE SETTINGS -->
+<section id="screen-settings-profile" class="screen">
+  <div class="pitch-bg"></div>
+  <header class="topbar">
+    <button class="back-btn" id="settings-profile-back">←</button>
+    <span class="topbar-title">EDIT PROFILE</span>
+    <span></span>
+  </header>
+
+  <div class="profile-settings-form">
+    <div class="avatar-picker-section">
+      <div class="avatar-picker-title">YOUR AVATAR <span id="avatar-count">0/0</span></div>
+      <div class="avatar-grid" id="avatar-grid"></div>
+    </div>
+
+    <div id="photo-upload-section">
+      <div class="field-label">PREMIUM PHOTO</div>
+      <button class="btn-ghost" id="upload-photo-btn">📷 UPLOAD YOUR PHOTO</button>
+      <input type="file" id="photo-input" accept="image/*" style="display:none;" />
+      <p class="input-hint" id="photo-hint">Premium only · Stored on your device</p>
+    </div>
+
+    <div>
+      <div class="field-label">NAME</div>
+      <input id="settings-name" class="input" type="text" maxlength="16" placeholder="Your name" />
+    </div>
+
+    <div>
+      <div class="field-label">COUNTRY</div>
+      <select id="settings-country" class="input select">
+        <option value="">Select country…</option>
+        <option>Nigeria</option><option>Ghana</option><option>Kenya</option>
+        <option>South Africa</option><option>Egypt</option><option>Morocco</option>
+        <option>Senegal</option><option>Ivory Coast</option><option>Cameroon</option>
+        <option>England</option><option>Spain</option><option>France</option>
+        <option>Germany</option><option>Italy</option><option>Portugal</option>
+        <option>Netherlands</option><option>Belgium</option><option>Croatia</option>
+        <option>Brazil</option><option>Argentina</option><option>Uruguay</option>
+        <option>Mexico</option><option>Colombia</option><option>Chile</option>
+        <option>United States</option><option>Canada</option>
+        <option>India</option><option>Japan</option><option>South Korea</option>
+        <option>China</option><option>Indonesia</option><option>Australia</option>
+        <option>Saudi Arabia</option><option>Qatar</option><option>UAE</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <button class="btn-primary" id="save-profile-btn">SAVE CHANGES</button>
+    <button class="btn-ghost" id="cancel-profile-btn">CANCEL</button>
+  </div>
+</section>
+
+<!-- CATEGORY PICKER -->
+<section id="screen-category" class="screen">
+  <div class="pitch-bg"></div>
+  <header class="topbar">
+    <button class="back-btn" id="category-back">←</button>
+    <span class="topbar-title">PICK CATEGORY</span>
+    <span></span>
+  </header>
+
+  <div class="category-list" id="category-list">
+    <button class="cat-item" data-cat="all">🌍 All Categories</button>
+    <button class="cat-item" data-cat="Premier League">🏴 Premier League</button>
+    <button class="cat-item" data-cat="La Liga">🇪🇸 La Liga</button>
+    <button class="cat-item" data-cat="Serie A">🇮🇹 Serie A</button>
+    <button class="cat-item" data-cat="Bundesliga">🇩🇪 Bundesliga</button>
+    <button class="cat-item" data-cat="Ligue 1">🇫🇷 Ligue 1</button>
+    <button class="cat-item" data-cat="World Cup">🏆 World Cup</button>
+    <button class="cat-item" data-cat="Champions League">⭐ Champions League</button>
+    <button class="cat-item" data-cat="African Football">🌍 African Football</button>
+    <button class="cat-item" data-cat="Legendary Players">👑 Legendary Players</button>
+    <button class="cat-item" data-cat="Stadiums & Clubs">🏟️ Stadiums & Clubs</button>
+  </div>
+</section>
+
+<!-- LEADERBOARD -->
+<section id="screen-leaderboard" class="screen">
+  <div class="pitch-bg"></div>
+  <header class="topbar">
+    <button class="back-btn" id="leaderboard-back">←</button>
+    <span class="topbar-title">LEADERBOARD</span>
+    <span></span>
+  </header>
+
+  <div class="lb-tabs">
+    <button class="lb-tab active" data-lb="alltime">All Time</button>
+    <button class="lb-tab" data-lb="weekly">This Week</button>
+  </div>
+
+  <div class="lb-list" id="lb-list">
+    <div class="lb-empty">Loading…</div>
+  </div>
+</section>
+
+<!-- DAILY CHALLENGE -->
+<section id="screen-daily" class="screen">
+  <div class="pitch-bg"></div>
+  <header class="topbar">
+    <button class="back-btn" id="daily-back">←</button>
+    <span class="topbar-title">DAILY CHALLENGE</span>
+    <span></span>
+  </header>
+
+  <div class="daily-wrap">
+    <div class="daily-icon float">🎯</div>
+    <h2 class="daily-title">Today's Challenge</h2>
+    <p class="daily-sub">10 special pro questions. Every day at midnight.</p>
+
+    <div class="daily-streak">
+      <span class="daily-streak-num" id="daily-streak-num">0</span>
+      <span class="daily-streak-lbl">🔥 Day Streak</span>
+    </div>
+
+    <button class="btn-primary" id="daily-start">START CHALLENGE</button>
+    <div class="daily-done" id="daily-done" style="display:none;">✅ Done today. Come back tomorrow!</div>
+  </div>
+</section>
+
+<!-- STORE -->
+<section id="screen-store" class="screen">
+  <div class="pitch-bg"></div>
+  <header class="topbar">
+    <button class="back-btn" id="store-back">←</button>
+    <span class="topbar-title">STORE</span>
+    <span class="coin-mini">💰 <span id="store-coins">0</span></span>
+  </header>
+
+  <div class="store-tabs">
+    <button class="store-tab active" data-store="coins">Coins</button>
+    <button class="store-tab" data-store="avatars">Avatars</button>
+    <button class="store-tab" data-store="packs">Packs</button>
+  </div>
+
+  <div class="store-list" id="store-list"></div>
+</section>
+
+<!-- COIN SHOP -->
+<section id="screen-coinshop" class="screen">
+  <div class="pitch-bg"></div>
+  <header class="topbar">
+    <button class="back-btn" id="coinshop-back">←</button>
+    <span class="topbar-title">GET COINS</span>
+    <span class="coin-mini">💰 <span id="coinshop-balance">0</span></span>
+  </header>
+
+  <div class="coinshop-list">
+    <div class="coinshop-item" data-reward="50" data-ad="5">
+      <div class="coinshop-icon">💰</div>
+      <div class="coinshop-info">
+        <div class="coinshop-name">+50 Coins</div>
+        <div class="coinshop-sub">Watch 5-second ad</div>
+      </div>
+      <button class="store-btn">FREE</button>
+    </div>
+    <div class="coinshop-item" data-reward="150" data-ad="15">
+      <div class="coinshop-icon">💰💰</div>
+      <div class="coinshop-info">
+        <div class="coinshop-name">+150 Coins</div>
+        <div class="coinshop-sub">Watch 15-second ad</div>
+      </div>
+      <button class="store-btn">FREE</button>
+    </div>
+    <div class="coinshop-item" data-reward="500" data-ad="30">
+      <div class="coinshop-icon">💰💰💰</div>
+      <div class="coinshop-info">
+        <div class="coinshop-name">+500 Coins</div>
+        <div class="coinshop-sub">Watch 30-second ad</div>
+      </div>
+      <button class="store-btn">FREE</button>
+    </div>
+    <div class="coinshop-item" data-reward="1000" data-ad="60">
+      <div class="coinshop-icon">👑</div>
+      <div class="coinshop-info">
+        <div class="coinshop-name">+1000 Coins</div>
+        <div class="coinshop-sub">Watch 60-second ad</div>
+      </div>
+      <button class="store-btn">FREE</button>
+    </div>
+  </div>
+</section>
+
+<!-- ⬇️ CONTINUE WITH CHUNK 3 ⬇️ -->
+    <!-- ACHIEVEMENTS -->
+  <section id="screen-achievements" class="screen">
+    <div class="pitch-bg"></div>
+    <header class="topbar">
+      <button class="back-btn" id="ach-back">←</button>
+      <span class="topbar-title">ACHIEVEMENTS</span>
+      <span></span>
+    </header>
+
+    <div class="ach-list">
+      <div class="ach-item locked" data-ach="first-win">
+        <div class="ach-icon">🥉</div>
+        <div class="ach-info">
+          <div class="ach-name">First Win</div>
+          <div class="ach-sub">Score 12+ in any game</div>
+        </div>
+      </div>
+      <div class="ach-item locked" data-ach="perfect">
+        <div class="ach-icon">🥇</div>
+        <div class="ach-info">
+          <div class="ach-name">Perfect Game</div>
+          <div class="ach-sub">Get 20/20</div>
+        </div>
+      </div>
+      <div class="ach-item locked" data-ach="streak-7">
+        <div class="ach-icon">🔥</div>
+        <div class="ach-info">
+          <div class="ach-name">On Fire</div>
+          <div class="ach-sub">7-day streak</div>
+        </div>
+      </div>
+      <div class="ach-item locked" data-ach="all-cats">
+        <div class="ach-icon">🌍</div>
+        <div class="ach-info">
+          <div class="ach-name">Globetrotter</div>
+          <div class="ach-sub">Play every category</div>
+        </div>
+      </div>
+      <div class="ach-item locked" data-ach="coin-master">
+        <div class="ach-icon">💰</div>
+        <div class="ach-info">
+          <div class="ach-name">Coin Master</div>
+          <div class="ach-sub">Earn 1000 coins total</div>
+        </div>
+      </div>
+      <div class="ach-item locked" data-ach="daily-7">
+        <div class="ach-icon">🎯</div>
+        <div class="ach-info">
+          <div class="ach-name">Daily Devotee</div>
+          <div class="ach-sub">7 daily challenges in a row</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TROPHY ROOM -->
+  <section id="screen-trophies" class="screen">
+    <div class="pitch-bg"></div>
+    <header class="topbar">
+      <button class="back-btn" id="trophies-back">←</button>
+      <span class="topbar-title">TROPHY ROOM</span>
+      <span></span>
+    </header>
+
+    <div class="trophy-section">
+      <div class="trophy-section-title">🏅 ACHIEVEMENTS</div>
+      <div class="trophy-grid" id="trophy-ach-grid"></div>
+    </div>
+
+    <div class="trophy-section">
+      <div class="trophy-section-title">🏆 MILESTONES</div>
+      <div class="trophy-grid" id="trophy-mile-grid"></div>
+    </div>
+  </section>
+
+  <!-- NOTIFICATIONS -->
+  <section id="screen-notifications" class="screen">
+    <div class="pitch-bg"></div>
+    <header class="topbar">
+      <button class="back-btn" id="notif-back">←</button>
+      <span class="topbar-title">NOTIFICATIONS</span>
+      <span></span>
+    </header>
+
+    <div class="notif-panel-wrap" id="notif-panel">
+      <div class="notif-empty">No notifications yet.<br>Play a game to start seeing updates.</div>
+    </div>
+  </section>
+
+  <!-- FRIENDS -->
+  <section id="screen-friends" class="screen">
+    <div class="pitch-bg"></div>
+    <header class="topbar">
+      <button class="back-btn" id="friends-back">←</button>
+      <span class="topbar-title">FRIENDS</span>
+      <span></span>
+    </header>
+
+    <div class="friend-tabs">
+      <button class="friend-tab active" data-ftab="list">My Friends</button>
+      <button class="friend-tab" data-ftab="requests">Requests</button>
+      <button class="friend-tab" data-ftab="add">Add Friend</button>
+    </div>
+
+    <!-- My Friends -->
+    <div id="ftab-list">
+      <div class="friend-list" id="friend-list">
+        <div class="lb-empty">No friends yet. Add someone by username.</div>
+      </div>
+    </div>
+
+    <!-- Requests -->
+    <div id="ftab-requests" style="display:none;">
+      <div class="friend-list" id="friend-requests">
+        <div class="lb-empty">No pending requests.</div>
+      </div>
+    </div>
+
+    <!-- Add -->
+    <div id="ftab-add" style="display:none;">
+      <div class="add-friend-row">
+        <input id="add-friend-input" class="input" type="text" placeholder="Username" maxlength="20" autocomplete="off" />
+        <button class="btn-primary" id="add-friend-btn">SEND</button>
+      </div>
+      <p class="input-hint" id="add-friend-hint"></p>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="screen-settings" class="screen">
+    <div class="pitch-bg"></div>
+    <header class="topbar">
+      <button class="back-btn" id="settings-back">←</button>
+      <span class="topbar-title">SETTINGS</span>
+      <span></span>
+    </header>
+
+    <div class="settings-list">
+      <div class="setting-row">
+        <span class="setting-label">🔊 Sound Effects</span>
+        <label class="switch"><input type="checkbox" id="toggle-sfx" checked><span class="slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">🎵 Background Ambience</span>
+        <label class="switch"><input type="checkbox" id="toggle-amb" checked><span class="slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">📳 Haptics</span>
+        <label class="switch"><input type="checkbox" id="toggle-haptic" checked><span class="slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">🚪 Sign Out</span>
+        <button class="btn-danger" id="signout-btn">SIGN OUT</button>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">🗑️ Reset Profile</span>
+        <button class="btn-danger" id="reset-profile">RESET</button>
+      </div>
+      <div class="setting-row col">
+        <span class="setting-label">ℹ️ About</span>
+        <span class="setting-about">Panda Kick v1.0 — Built by Panda</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PREMIUM -->
+  <section id="screen-premium" class="screen">
+    <div class="pitch-bg"></div>
+    <header class="topbar">
+      <button class="back-btn" id="premium-back">←</button>
+      <span class="topbar-title">PREMIUM</span>
+      <span></span>
+    </header>
+
+    <div class="premium-wrap">
+      <div class="premium-badge float">💎</div>
+      <h2 class="premium-title">Panda Kick Premium</h2>
+      <p class="premium-sub">Unlock the full football universe.</p>
+
+      <ul class="premium-features">
+        <li>✅ No ads, ever</li>
+        <li>✅ Fresh questions from live data</li>
+        <li>✅ Daily Football Challenge</li>
+        <li>✅ All future question packs</li>
+        <li>✅ 15 exclusive premium avatars</li>
+        <li>✅ Upload your own profile photo</li>
+        <li>✅ Premium badge on profile</li>
+      </ul>
+
+      <button class="btn-primary" id="premium-buy">💎 GO PREMIUM</button>
+      <button class="btn-ghost" id="premium-restore">RESTORE PURCHASE</button>
+    </div>
+  </section>
+
+  <!-- GAME -->
+  <section id="screen-game" class="screen">
+    <div class="pitch-bg"></div>
+
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="badge" id="current-diff">EASY</span>
+      </div>
+      <div class="topbar-right">
+        <span class="coin-mini">💰 <span id="game-coins">0</span></span>
+        <span class="score" id="score-display">0</span>
+        <span class="score-sep">/</span>
+        <span class="q-count" id="q-counter">1/20</span>
+      </div>
+    </header>
+
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+
+    <div class="question-wrap slide-in">
+      <p class="category-tag" id="category-tag">WORLD CUP</p>
+      <h2 class="question-text" id="question-text">Loading…</h2>
+    </div>
+
+    <div class="answers" id="answers"></div>
+
+    <div class="game-tools">
+      <button class="tool-btn" id="hint-btn">
+        💡 Hint
+        <span class="tool-cost">30 💰</span>
+      </button>
+      <button class="tool-btn" id="skip-btn">
+        ⏭️ Skip
+        <span class="tool-cost">50 💰</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- END -->
+  <section id="screen-end" class="screen">
+    <div class="pitch-bg"></div>
+    <div class="net-overlay"></div>
+    <div class="floodlight"></div>
+    <div class="confetti" id="confetti"></div>
+    <div class="end-wrap">
+      <div class="end-label">FINAL SCORE</div>
+      <div class="end-score" id="final-score">0/20</div>
+      <div class="end-msg" id="end-msg">Good effort.</div>
+
+      <div class="end-rewards">
+        <div class="reward-item">
+          <span class="reward-num" id="end-coins">+0</span>
+          <span class="reward-lbl">💰 Coins</span>
+        </div>
+      </div>
+
+      <div class="end-actions">
+        <button class="btn-primary" id="play-again">PLAY AGAIN</button>
+        <button class="btn-ghost" id="share-btn">📤 SHARE SCORE</button>
+        <button class="btn-ghost" id="back-home">HOME</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SHARE -->
+  <section id="screen-share" class="screen">
+    <div class="pitch-bg"></div>
+    <header class="topbar">
+      <button class="back-btn" id="share-back">←</button>
+      <span class="topbar-title">SHARE</span>
+      <span></span>
+    </header>
+
+    <div class="share-wrap">
+      <div class="share-card" id="share-card">
+        <div class="share-brand">⚽ PANDA KICK</div>
+        <div class="share-score" id="share-score">18/20</div>
+        <div class="share-msg" id="share-msg">I scored 18/20 in Football Trivia!</div>
+        <div class="share-name" id="share-name">— Player</div>
+      </div>
+
+      <div class="share-actions">
+        <button class="btn-primary" id="share-whatsapp">📱 WhatsApp</button>
+        <button class="btn-primary" id="share-twitter">🐦 Twitter / X</button>
+        <button class="btn-ghost" id="share-copy">📋 Copy Text</button>
+        <button class="btn-ghost" id="share-image">🖼️ Save Image</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- AD OVERLAY -->
+  <div id="ad-overlay" class="ad-overlay" style="display:none;">
+    <div class="ad-modal">
+      <div class="ad-title">📺 Ad playing…</div>
+      <div class="ad-countdown" id="ad-countdown">5</div>
+      <div class="ad-sub">Reward ready when countdown ends</div>
+    </div>
+  </div>
+
+  <!-- SOUNDS -->
+  <audio id="sfx-correct"  preload="auto" src="sounds/correct.mp3"></audio>
+  <audio id="sfx-wrong"    preload="auto" src="sounds/wrong.mp3"></audio>
+  <audio id="sfx-ambience" preload="auto" src="sounds/ambience.mp3" loop></audio>
+  <audio id="sfx-win"      preload="auto" src="sounds/win.mp3"></audio>
+  <audio id="sfx-tap"      preload="auto" src="sounds/tap.mp3"></audio>
+  <audio id="sfx-enter"    preload="auto" src="sounds/enter.mp3"></audio>
+
+  <script type="module" src="app.js"></script>
+</body>
+    </html>
