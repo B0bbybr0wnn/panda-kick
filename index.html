@@ -2,18 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#0B0F14" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Panda Kick" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
   <title>Panda Kick</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
-  <!-- ============ HOME SCREEN ============ -->
-  <section id="screen-home" class="screen active">
+  <!-- SPLASH SCREEN -->
+  <div id="splash" class="splash">
+    <div class="splash-inner">
+      <div class="splash-logo">⚽</div>
+      <div class="splash-brand">PANDA KICK</div>
+      <div class="splash-tag">Test your football knowledge.</div>
+    </div>
+  </div>
+
+  <!-- HOME SCREEN -->
+  <section id="screen-home" class="screen">
     <div class="pitch-bg"></div>
     <div class="home-wrap">
-      <div class="logo-mark">⚽</div>
+      <div class="logo-mark float">⚽</div>
       <h1 class="brand">PANDA KICK</h1>
       <p class="tagline">Test your football knowledge.</p>
 
@@ -41,7 +55,7 @@
     </div>
   </section>
 
-  <!-- ============ GAME SCREEN ============ -->
+  <!-- GAME SCREEN -->
   <section id="screen-game" class="screen">
     <div class="pitch-bg"></div>
 
@@ -59,7 +73,7 @@
 
     <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
 
-    <div class="question-wrap">
+    <div class="question-wrap slide-in">
       <p class="category-tag" id="category-tag">WORLD CUP</p>
       <h2 class="question-text" id="question-text">Loading…</h2>
     </div>
@@ -71,10 +85,11 @@
     </div>
   </section>
 
-  <!-- ============ END SCREEN ============ -->
+  <!-- END SCREEN -->
   <section id="screen-end" class="screen">
     <div class="pitch-bg"></div>
     <div class="net-overlay"></div>
+    <div class="confetti" id="confetti"></div>
     <div class="end-wrap">
       <div class="end-label">FINAL SCORE</div>
       <div class="end-score" id="final-score">0/20</div>
@@ -87,11 +102,14 @@
     </div>
   </section>
 
-  <audio id="sfx-correct"  preload="none"></audio>
-  <audio id="sfx-wrong"    preload="none"></audio>
-  <audio id="sfx-whistle"  preload="none"></audio>
-  <audio id="sfx-ambience" preload="none" loop></audio>
+  <!-- SOUND FILES -->
+  <audio id="sfx-correct"  preload="auto" src="sounds/correct.mp3"></audio>
+  <audio id="sfx-wrong"    preload="auto" src="sounds/wrong.mp3"></audio>
+  <audio id="sfx-ambience" preload="auto" src="sounds/ambience.mp3" loop></audio>
+  <audio id="sfx-win"      preload="auto" src="sounds/win.mp3"></audio>
+  <audio id="sfx-tap"      preload="auto" src="sounds/tap.mp3"></audio>
+  <audio id="sfx-enter"    preload="auto" src="sounds/enter.mp3"></audio>
 
   <script type="module" src="app.js"></script>
 </body>
-  </html>
+      </html>
