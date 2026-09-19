@@ -334,7 +334,7 @@ function goBack() {
 }
 
 window.addEventListener("popstate", () => goBack());
-history.pushState({}, ""); // enables popstate
+history.pushState({ page: "home" }, "", location.href);
 
 /* ⬇️ CONTINUE WITH CHUNK 3 ⬇️ */
 /* ============================================================
