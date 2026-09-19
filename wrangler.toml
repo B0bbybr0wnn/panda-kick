@@ -2,5 +2,10 @@ name = "panda-kick-api"
 main = "src/worker.js"
 compatibility_date = "2024-09-19"
 
+[[d1_databases]]
+binding = "DB"
+database_name = "panda-kick-db"
+database_id = "d6cc961a-e720-4292-b29e-a8d287b44818"
+
 [triggers]
 crons = ["0 9 * * *"]
