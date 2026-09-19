@@ -1,9 +1,10 @@
-const CACHE = "panda-kick-v1";
+const CACHE = "panda-kick-v3";
 const ASSETS = [
   "/",
   "/index.html",
   "/styles.css",
   "/app.js",
+  "/icons.js",
   "/data/questions.js",
   "/manifest.json",
   "/sounds/correct.mp3",
