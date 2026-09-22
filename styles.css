@@ -1779,3 +1779,249 @@ button, .answer-btn, .avatar-cell, .quick-btn {
 ::-webkit-scrollbar { width: 0; height: 0; }
 
 /* ⬇️ END OF STYLES ⬇️ */
+/* ============================================================
+   CHALLENGES — layout
+   ============================================================ */
+
+.challenge-wrap {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 14px;
+  padding: 20px;
+}
+
+.challenge-icon {
+  font-size: 72px;
+  filter: drop-shadow(0 0 32px rgba(139, 92, 246, 0.7));
+  animation: float 3s ease-in-out infinite;
+}
+
+.challenge-title {
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.challenge-sub {
+  font-size: 13px;
+  color: var(--text-2);
+  max-width: 300px;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.challenge-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 340px;
+  margin-top: 8px;
+}
+
+.challenge-code-display {
+  background: linear-gradient(135deg, var(--surface-2), var(--surface-3));
+  border: 2px dashed var(--gold-deep);
+  border-radius: 16px;
+  padding: 22px 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 18px;
+  box-shadow: 0 0 32px rgba(255, 216, 77, 0.2);
+}
+
+.challenge-code-label {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 2.5px;
+  color: var(--text-2);
+}
+
+.challenge-code {
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: 6px;
+  color: var(--gold);
+  font-family: "SF Mono", Consolas, monospace;
+  text-shadow: 0 0 20px rgba(255, 216, 77, 0.5);
+}
+
+.challenge-list {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 20px;
+}
+
+.challenge-item {
+  background: var(--surface-2);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.challenge-item:active {
+  transform: scale(0.98);
+  background: var(--surface-3);
+  border-color: var(--gold);
+}
+.challenge-item-title {
+  flex: 1;
+  font-weight: 800;
+  font-size: 14px;
+}
+.challenge-item-sub {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+
+.challenge-vs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 20px 0;
+  width: 100%;
+  max-width: 360px;
+  flex-wrap: wrap;
+}
+
+.vs-side {
+  flex: 1;
+  min-width: 110px;
+  background: var(--surface-2);
+  border: 1.5px solid var(--border-hi);
+  border-radius: 14px;
+  padding: 16px 12px;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+.vs-side.winner {
+  border-color: var(--gold);
+  box-shadow: var(--glow-gold);
+  background: linear-gradient(160deg, var(--surface-2), rgba(255, 216, 77, 0.08));
+}
+
+.vs-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-2);
+  margin-bottom: 6px;
+  word-break: break-word;
+}
+.vs-side.winner .vs-name { color: var(--gold); }
+
+.vs-score {
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.vs-side.winner .vs-score {
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(255, 216, 77, 0.5);
+}
+
+.vs-divider {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--text-3);
+  letter-spacing: 2px;
+}
+
+/* ⬇️ NEXT CHUNK BELOW ⬇️ */
+/* ============================================================
+   CHALLENGE — extra polish
+   ============================================================ */
+
+.challenge-code-display {
+  position: relative;
+  overflow: hidden;
+}
+.challenge-code-display::before {
+  content: "";
+  position: absolute;
+  top: -40%;
+  right: -40%;
+  width: 80%;
+  height: 80%;
+  background: radial-gradient(circle, rgba(255, 216, 77, 0.2), transparent 65%);
+  pointer-events: none;
+}
+
+.challenge-item {
+  position: relative;
+}
+.challenge-item .challenge-item-badge {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--surface-3);
+  color: var(--text-2);
+  flex-shrink: 0;
+}
+.challenge-item .challenge-item-badge.open {
+  background: rgba(255, 216, 77, 0.15);
+  color: var(--gold);
+  border: 1px solid var(--gold-deep);
+}
+
+/* Animations */
+@keyframes challengePulse {
+  0%, 100% { box-shadow: 0 0 32px rgba(255, 216, 77, 0.2); }
+  50%      { box-shadow: 0 0 48px rgba(255, 216, 77, 0.5); }
+}
+.challenge-code-display {
+  animation: challengePulse 2.5s ease-in-out infinite;
+}
+
+@keyframes vsIn {
+  0%   { opacity: 0; transform: translateY(20px) scale(0.9); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.vs-side {
+  animation: vsIn 0.4s cubic-bezier(.34,1.56,.64,1) both;
+}
+.vs-side:nth-child(1) { animation-delay: 0.05s; }
+.vs-side:nth-child(2) { animation-delay: 0.15s; }
+.vs-side:nth-child(3) { animation-delay: 0.25s; }
+.vs-side:nth-child(4) { animation-delay: 0.35s; }
+.vs-side:nth-child(5) { animation-delay: 0.45s; }
+
+/* Input big mode */
+#ch-join-input {
+  background: var(--surface-2);
+  border: 2px solid var(--border-hi);
+  color: var(--gold);
+  font-weight: 900;
+  max-width: 280px;
+  padding: 20px 16px;
+}
+#ch-join-input::placeholder {
+  color: var(--text-3);
+  letter-spacing: 4px;
+}
+#ch-join-input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(255, 216, 77, 0.2), var(--glow-gold);
+}
+
+/* ⬇️ END OF STYLES ⬇️ */
