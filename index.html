@@ -207,6 +207,7 @@
     <button class="btn-ghost" id="edit-profile">⚙️ EDIT PROFILE</button>
     <button class="btn-ghost" id="trophy-btn">🏆 TROPHY ROOM</button>
     <button class="btn-ghost" id="friends-btn">⚔️ FRIENDS</button>
+    <button class="btn-ghost" id="challenges-profile-btn">🎫 CHALLENGES</button>
   </div>
 </section>
 
@@ -639,6 +640,7 @@
       <div class="end-actions">
         <button class="btn-primary" id="play-again">PLAY AGAIN</button>
         <button class="btn-ghost" id="share-btn">📤 SHARE SCORE</button>
+        <button class="btn-ghost" id="challenge-end-btn">🎫 CHALLENGE FRIENDS</button>
         <button class="btn-ghost" id="back-home">HOME</button>
       </div>
     </div>
@@ -669,6 +671,119 @@
       </div>
     </div>
   </section>
+  <!-- CHALLENGES HUB -->
+<section id="screen-challenges" class="screen">
+  <div class="pitch-bg"></div>
+  <header class="topbar">
+    <button class="back-btn" id="challenges-back">←</button>
+    <span class="topbar-title">CHALLENGES</span>
+    <span></span>
+  </header>
+
+  <div class="challenge-wrap">
+    <div class="challenge-icon">⚔️</div>
+    <h2 class="challenge-title">Play With Friends</h2>
+    <p class="challenge-sub">Create a challenge, share the code, and see who's the real football head.</p>
+
+    <div class="challenge-actions">
+      <button class="btn-primary" id="ch-create-btn">➕ CREATE CHALLENGE</button>
+      <button class="btn-ghost" id="ch-join-btn">🔑 JOIN WITH CODE</button>
+      <button class="btn-ghost" id="ch-mine-btn">📋 MY CHALLENGES</button>
+    </div>
+  </div>
+</section>
+
+<!-- CHALLENGE RESULT (creator shows code after finishing game) -->
+<section id="screen-challenge-created" class="screen">
+  <div class="pitch-bg"></div>
+  <header class="topbar">
+    <button class="back-btn" id="ch-created-back">←</button>
+    <span class="topbar-title">CHALLENGE READY</span>
+    <span></span>
+  </header>
+
+  <div class="challenge-wrap">
+    <div class="challenge-icon">🎫</div>
+    <h2 class="challenge-title">Share This Code</h2>
+    <p class="challenge-sub">Send this code to your friends. They'll play the exact same 20 questions.</p>
+
+    <div class="challenge-code-display">
+      <div class="challenge-code-label">CHALLENGE CODE</div>
+      <div class="challenge-code" id="ch-code-display">PK-XXXXX</div>
+    </div>
+
+    <div class="challenge-actions">
+      <button class="btn-primary" id="ch-copy-code">📋 COPY CODE</button>
+      <button class="btn-primary" id="ch-share-whatsapp">📱 SHARE ON WHATSAPP</button>
+      <button class="btn-ghost" id="ch-view-results">🏆 VIEW RESULTS</button>
+      <button class="btn-ghost" id="ch-created-home">← BACK HOME</button>
+    </div>
+  </div>
+</section>
+
+<!-- JOIN CHALLENGE -->
+<section id="screen-challenge-join" class="screen">
+  <div class="pitch-bg"></div>
+  <header class="topbar">
+    <button class="back-btn" id="ch-join-back">←</button>
+    <span class="topbar-title">JOIN CHALLENGE</span>
+    <span></span>
+  </header>
+
+  <div class="challenge-wrap">
+    <div class="challenge-icon">🔑</div>
+    <h2 class="challenge-title">Enter Code</h2>
+    <p class="challenge-sub">Got a challenge code from a friend? Enter it below.</p>
+
+    <input id="ch-join-input" class="input" type="text" placeholder="PK-XXXXX" maxlength="12" autocapitalize="characters" autocomplete="off" style="text-align:center; font-size:22px; letter-spacing:4px; font-weight:900;" />
+
+    <div class="challenge-actions">
+      <button class="btn-primary" id="ch-join-submit">▶ PLAY CHALLENGE</button>
+      <button class="btn-ghost" id="ch-join-cancel">CANCEL</button>
+    </div>
+  </div>
+</section>
+
+<!-- CHALLENGE RESULT (VS view) -->
+<section id="screen-challenge-result" class="screen">
+  <div class="pitch-bg"></div>
+  <div class="net-overlay"></div>
+  <div class="floodlight"></div>
+  <header class="topbar">
+    <button class="back-btn" id="ch-result-back">←</button>
+    <span class="topbar-title">CHALLENGE RESULT</span>
+    <span></span>
+  </header>
+
+  <div class="challenge-wrap">
+    <h2 class="challenge-title" id="ch-result-title">Results</h2>
+    <p class="challenge-sub" id="ch-result-code">Challenge PK-XXXXX</p>
+
+    <div class="challenge-vs" id="ch-vs-box">
+      <!-- filled dynamically -->
+    </div>
+
+    <div class="challenge-actions">
+      <button class="btn-primary" id="ch-result-share">📤 SHARE RESULT</button>
+      <button class="btn-ghost" id="ch-result-home">← BACK HOME</button>
+    </div>
+  </div>
+</section>
+
+<!-- MY CHALLENGES -->
+<section id="screen-challenge-mine" class="screen">
+  <div class="pitch-bg"></div>
+  <header class="topbar">
+    <button class="back-btn" id="ch-mine-back">←</button>
+    <span class="topbar-title">MY CHALLENGES</span>
+    <span></span>
+  </header>
+
+  <div class="challenge-list" id="ch-mine-list">
+    <div class="lb-empty">Loading…</div>
+  </div>
+    </section>
+  
 
   <!-- AD OVERLAY -->
   <div id="ad-overlay" class="ad-overlay" style="display:none;">
