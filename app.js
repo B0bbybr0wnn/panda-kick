@@ -1817,3 +1817,536 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch(() => {});
   });
 }
+
+/* ============================================================
+   CHALLENGES — Phase 9
+   ============================================================ */
+
+let currentChallenge = null; // { id, code, question_ids, creator_name }
+
+// Show the challenges hub
+function openChallengeHub() {
+  play(el.sfxTap, false); buzz(12);
+  showScreen("challenges");
+}
+
+// CREATE: creator finishes a game, then decides to create a challenge
+// from that specific set of 20 questions
+async function createChallengeFromLastGame() {
+  if (!state.loggedIn || !state.userId) {
+    showToast("Sign in to create challenges.", "error");
+    return;
+  }
+  if (!state.pool || state.pool.length !== 20) {
+    showToast("Play a game first.", "error");
+    return;
+  }
+
+  // Generate stable question IDs (category+question hash)
+  const questionIds = state.pool.map(q => makeQuestionId(q));
+
+  try {
+    const res = await fetch(WORKER_URL + "/challenge/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: state.userId,
+        username: state.username,
+        question_ids: questionIds
+      })
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      showToast(data.error || "Could not create challenge", "error");
+      return;
+    }
+
+    // Record creator's score immediately
+    await fetch(WORKER_URL + "/challenge/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        challenge_id: data.challenge_id,
+        user_id: state.userId,
+        username: state.username,
+        score: state.score,
+        total: QUESTIONS_PER_GAME
+      })
+    });
+
+    currentChallenge = {
+      id: data.challenge_id,
+      code: data.code,
+      question_ids: questionIds,
+      creator_name: state.username
+    };
+
+    el.chCodeDisplay.textContent = data.code;
+    play(el.sfxCorrect);
+    buzz([20, 40, 20]);
+    showScreen("challengeCreated");
+  } catch (e) {
+    showToast("Network error", "error");
+  }
+}
+
+// Small stable ID for a question
+function makeQuestionId(q) {
+  const raw = q.category + "|" + q.question + "|" + q.options[q.answer];
+  let hash = 0;
+  for (let i = 0; i < raw.length; i++) {
+    hash = (hash * 31 + raw.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash).toString(36);
+}
+
+// JOIN: enter code, fetch question IDs, find matching questions, play
+async function joinChallenge(code) {
+  const clean = String(code || "").trim().toUpperCase();
+  if (!clean) {
+    showToast("Enter a code", "error");
+    return;
+  }
+
+  el.chJoinSubmit.disabled = true;
+  el.chJoinSubmit.classList.add("busy");
+
+  try {
+    const res = await fetch(WORKER_URL + "/challenge/join", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: clean })
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      showToast(data.error || "Not found", "error");
+      el.chJoinSubmit.disabled = false;
+      el.chJoinSubmit.classList.remove("busy");
+      return;
+    }
+
+    // Rebuild the exact questions from IDs
+    const idMap = new Map();
+    QUESTIONS.forEach(q => idMap.set(makeQuestionId(q), q));
+
+    const pool = [];
+    data.challenge.question_ids.forEach(id => {
+      const q = idMap.get(id);
+      if (q) pool.push(shuffleQuestion(q));
+    });
+
+    if (pool.length !== 20) {
+      showToast("Challenge questions unavailable.", "error");
+      el.chJoinSubmit.disabled = false;
+      el.chJoinSubmit.classList.remove("busy");
+      return;
+    }
+
+    currentChallenge = {
+      id: data.challenge.id,
+      code: data.challenge.code,
+      question_ids: data.challenge.question_ids,
+      creator_name: data.challenge.creator_name
+    };
+
+    // Start game with this specific pool
+    state.pool = pool;
+    state.current = 0;
+    state.score = 0;
+    state.answered = false;
+    state.isDaily = false;
+    state.difficulty = "pro";
+    state.isChallenge = true;
+
+    el.currentDiff.textContent = "CHALLENGE";
+    el.currentDiff.style.background = "var(--purple)";
+
+    refreshHomeUI();
+    showScreen("game");
+    renderQuestion();
+
+    el.chJoinSubmit.disabled = false;
+    el.chJoinSubmit.classList.remove("busy");
+  } catch (e) {
+    showToast("Network error", "error");
+    el.chJoinSubmit.disabled = false;
+    el.chJoinSubmit.classList.remove("busy");
+  }
+}
+
+// When a challenge game ends, submit the score
+async function submitChallengeScore() {
+  if (!currentChallenge) return;
+  try {
+    await fetch(WORKER_URL + "/challenge/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        challenge_id: currentChallenge.id,
+        user_id: state.userId,
+        username: state.username,
+        score: state.score,
+        total: QUESTIONS_PER_GAME
+      })
+    });
+  } catch (e) {}
+}
+
+// Load results + render VS view
+async function loadChallengeResults(challengeId) {
+  try {
+    const res = await fetch(WORKER_URL + "/challenge/results?challenge_id=" + challengeId);
+    const data = await res.json();
+    if (!data.ok) {
+      showToast("Could not load results", "error");
+      return;
+    }
+
+    el.chResultCode.textContent = "Challenge " + data.challenge.code;
+    el.chResultTitle.textContent = data.scores.length > 1 ? "Results" : "Waiting for players…";
+
+    // Build VS view
+    el.chVsBox.innerHTML = "";
+    const best = data.scores[0];
+    data.scores.slice(0, 5).forEach((s, i) => {
+      if (i > 0) {
+        const div = document.createElement("div");
+        div.className = "vs-divider";
+        div.textContent = "VS";
+        el.chVsBox.appendChild(div);
+      }
+      const side = document.createElement("div");
+      side.className = "vs-side" + (best && s.username === best.username && data.scores.length > 1 ? " winner" : "");
+      side.innerHTML = `
+        <div class="vs-name">${s.username}${s.is_creator ? " 👑" : ""}</div>
+        <div class="vs-score">${s.score}/${s.total}</div>
+      `;
+      el.chVsBox.appendChild(side);
+    });
+
+    play(el.sfxCorrect);
+    showScreen("challengeResult");
+  } catch (e) {
+    showToast("Network error", "error");
+  }
+}
+
+// Load "my challenges"
+async function loadMyChallenges() {
+  if (!state.username) return;
+  el.chMineList.innerHTML = `<div class="lb-loading"><div class="lb-spinner"></div></div>`;
+
+  try {
+    const res = await fetch(WORKER_URL + "/challenge/mine?username=" + encodeURIComponent(state.username));
+    const data = await res.json();
+    const list = data.challenges || [];
+
+    if (!list.length) {
+      el.chMineList.innerHTML = `<div class="lb-empty">No challenges yet.<br>Create one after your next game.</div>`;
+      return;
+    }
+
+    el.chMineList.innerHTML = "";
+    list.forEach(c => {
+      const item = document.createElement("div");
+      item.className = "challenge-item";
+      const date = new Date(c.created_at).toLocaleDateString();
+      item.innerHTML = `
+        <div>
+          <div class="challenge-item-title">${c.code}</div>
+          <div class="challenge-item-sub">by ${c.creator_name} · ${date}</div>
+        </div>
+        <span class="challenge-item-badge ${c.status === "open" ? "open" : ""}">${c.status.toUpperCase()}</span>
+      `;
+      item.addEventListener("click", () => loadChallengeResults(c.id));
+      el.chMineList.appendChild(item);
+    });
+  } catch (e) {
+    el.chMineList.innerHTML = `<div class="lb-empty">Failed to load.</div>`;
+  }
+}
+
+/* ============================================================
+   CHALLENGE — DOM refs + events
+   ============================================================ */
+
+const chEl = {
+  challenges:      $("screen-challenges"),
+  chCreated:       $("screen-challenge-created"),
+  chJoin:          $("screen-challenge-join"),
+  chResult:        $("screen-challenge-result"),
+  chMine:          $("screen-challenge-mine"),
+
+  chBack:          $("challenges-back"),
+  chCreateBtn:     $("ch-create-btn"),
+  chJoinBtn:       $("ch-join-btn"),
+  chMineBtn:       $("ch-mine-btn"),
+
+  chCreatedBack:   $("ch-created-back"),
+  chCodeDisplay:   $("ch-code-display"),
+  chCopyCode:      $("ch-copy-code"),
+  chShareWhatsapp: $("ch-share-whatsapp"),
+  chViewResults:   $("ch-view-results"),
+  chCreatedHome:   $("ch-created-home"),
+
+  chJoinBack:      $("ch-join-back"),
+  chJoinInput:     $("ch-join-input"),
+  chJoinSubmit:    $("ch-join-submit"),
+  chJoinCancel:    $("ch-join-cancel"),
+
+  chResultBack:    $("ch-result-back"),
+  chResultTitle:   $("ch-result-title"),
+  chResultCode:    $("ch-result-code"),
+  chVsBox:         $("ch-vs-box"),
+  chResultShare:   $("ch-result-share"),
+  chResultHome:    $("ch-result-home"),
+
+  chMineBack:      $("ch-mine-back"),
+  chMineList:      $("ch-mine-list"),
+
+  challengesProfileBtn: $("challenges-profile-btn"),
+  challengeEndBtn:      $("challenge-end-btn")
+};
+
+// Register the new screens with the showScreen system
+screens.challenges       = chEl.challenges;
+screens.challengeCreated = chEl.chCreated;
+screens.challengeJoin    = chEl.chJoin;
+screens.challengeResult  = chEl.chResult;
+screens.challengeMine    = chEl.chMine;
+
+/* ⬇️ NEXT CHUNK BELOW ⬇️ */
+/* ============================================================
+   CHALLENGE — EVENTS
+   ============================================================ */
+
+// Profile → Challenges button
+if (chEl.challengesProfileBtn) {
+  chEl.challengesProfileBtn.addEventListener("click", openChallengeHub);
+}
+
+// End screen → Challenge Friends button
+if (chEl.challengeEndBtn) {
+  chEl.challengeEndBtn.addEventListener("click", () => {
+    // Use the just-played 20 questions as the challenge set
+    play(el.sfxTap, false); buzz(12);
+    createChallengeFromLastGame();
+  });
+}
+
+// Hub → Back
+chEl.chBack.addEventListener("click", () => {
+  play(el.sfxTap, false); showScreen("profile");
+});
+
+// Hub → Create (needs a played game first)
+chEl.chCreateBtn.addEventListener("click", () => {
+  if (!state.pool || state.pool.length !== 20 || !state.loggedIn) {
+    showToast("Play a game first, then tap Challenge on the end screen.", "error");
+    return;
+  }
+  createChallengeFromLastGame();
+});
+
+// Hub → Join
+chEl.chJoinBtn.addEventListener("click", () => {
+  play(el.sfxTap, false); buzz(12);
+  el.chJoinInput.value = "";
+  showScreen("challengeJoin");
+});
+
+// Hub → My Challenges
+chEl.chMineBtn.addEventListener("click", () => {
+  play(el.sfxTap, false); buzz(12);
+  showScreen("challengeMine");
+  loadMyChallenges();
+});
+
+// Created screen → Back
+chEl.chCreatedBack.addEventListener("click", () => {
+  play(el.sfxTap, false); showScreen("challenges");
+});
+
+// Created → Copy code
+chEl.chCopyCode.addEventListener("click", async () => {
+  if (!currentChallenge) return;
+  play(el.sfxTap, false); buzz(12);
+  try {
+    await navigator.clipboard.writeText(currentChallenge.code);
+    showToast("Code copied!", "success");
+  } catch (e) {
+    showToast("Copy failed. Long-press to copy.", "error");
+  }
+});
+
+// Created → Share on WhatsApp
+chEl.chShareWhatsapp.addEventListener("click", () => {
+  if (!currentChallenge) return;
+  play(el.sfxTap, false); buzz(12);
+  const msg = `⚽ Panda Kick Challenge!\n\nI scored ${state.score}/20.\n\nCan you beat me? Open Panda Kick → Challenges → Join with code:\n\n${currentChallenge.code}\n\nhttps://panda-kick.pages.dev`;
+  window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
+});
+
+// Created → View Results
+chEl.chViewResults.addEventListener("click", () => {
+  if (!currentChallenge) return;
+  play(el.sfxTap, false); buzz(12);
+  loadChallengeResults(currentChallenge.id);
+});
+
+// Created → Home
+chEl.chCreatedHome.addEventListener("click", () => {
+  play(el.sfxTap, false); showScreen("home");
+});
+
+// Join screen → Back
+chEl.chJoinBack.addEventListener("click", () => {
+  play(el.sfxTap, false); showScreen("challenges");
+});
+
+// Join screen → Cancel
+chEl.chJoinCancel.addEventListener("click", () => {
+  play(el.sfxTap, false); showScreen("challenges");
+});
+
+// Join → Submit
+chEl.chJoinSubmit.addEventListener("click", () => {
+  play(el.sfxTap, false); buzz(12);
+  joinChallenge(el.chJoinInput.value);
+});
+
+// Join input → Enter key submits
+el.chJoinInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    chEl.chJoinSubmit.click();
+  }
+});
+
+// Result → Back
+chEl.chResultBack.addEventListener("click", () => {
+  play(el.sfxTap, false); showScreen("challenges");
+});
+
+// Result → Share
+chEl.chResultShare.addEventListener("click", () => {
+  if (!currentChallenge) return;
+  play(el.sfxTap, false); buzz(12);
+  const msg = `⚽ Panda Kick Challenge Result!\n\nCode: ${currentChallenge.code}\n\nhttps://panda-kick.pages.dev`;
+  window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
+});
+
+// Result → Home
+chEl.chResultHome.addEventListener("click", () => {
+  play(el.sfxTap, false); showScreen("home");
+});
+
+// My challenges → Back
+chEl.chMineBack.addEventListener("click", () => {
+  play(el.sfxTap, false); showScreen("challenges");
+});
+
+/* ============================================================
+   HOOK INTO GAME END — submit challenge score if this game was a challenge
+   ============================================================ */
+
+// Wrap the existing endGame function to also submit challenge score
+const _originalEndGame = endGame;
+endGame = async function() {
+  const wasChallenge = state.isChallenge === true;
+  const savedScore = state.score;
+  const savedTotal = state.isDaily ? DAILY_QUESTIONS : QUESTIONS_PER_GAME;
+
+  _originalEndGame.apply(this, arguments);
+
+  if (wasChallenge && currentChallenge) {
+    try {
+      await fetch(WORKER_URL + "/challenge/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          challenge_id: currentChallenge.id,
+          user_id: state.userId,
+          username: state.username,
+          score: savedScore,
+          total: savedTotal
+        })
+      });
+      showToast("Challenge score submitted!", "success");
+    } catch (e) {}
+  }
+
+  // Reset the flag
+  state.isChallenge = false;
+};
+
+/* ⬇️ NEXT CHUNK BELOW ⬇️ */
+/* ============================================================
+   CHALLENGE — Play Again override
+   ============================================================ */
+
+// If we're in a challenge and user taps Play Again,
+// don't submit again — just replay the same questions
+
+const _origPlayAgain = el.playAgain;
+el.playAgain.addEventListener("click", (e) => {
+  // Only intercept if this was a challenge
+  if (currentChallenge && state.pool && state.pool.length === 20) {
+    e.stopImmediatePropagation();
+    e.preventDefault();
+    play(el.sfxTap, false);
+    // Replay same pool
+    state.current = 0;
+    state.score = 0;
+    state.answered = false;
+    state.isChallenge = true;
+    state.isDaily = false;
+    state.difficulty = "pro";
+    el.currentDiff.textContent = "CHALLENGE";
+    el.currentDiff.style.background = "var(--purple)";
+    refreshHomeUI();
+    showScreen("game");
+    renderQuestion();
+  }
+}, true); // capture phase so we run first
+
+/* ============================================================
+   CHALLENGE — home shortcut (add to settings menu)
+   ============================================================ */
+
+// Quick access: after settings load, look for a slot in the profile
+// (already handled via challenges-profile-btn)
+
+/* ============================================================
+   CHALLENGE — initialize state field
+   ============================================================ */
+
+if (typeof state.isChallenge === "undefined") {
+  state.isChallenge = false;
+}
+
+/* ============================================================
+   CHALLENGE — save/load isChallenge flag on refresh safety
+   ============================================================ */
+
+// When user leaves a challenge screen without playing, clear the flag
+['challenges-back', 'ch-join-back', 'ch-mine-back', 'ch-result-back', 'ch-created-back'].forEach(id => {
+  const btn = $(id);
+  if (btn) {
+    btn.addEventListener("click", () => {
+      // Don't clear if they went back from the result screen (game may resume)
+      // Only clear when they leave the hub entirely back to profile
+      if (id === "challenges-back") {
+        // Clear current challenge context
+        currentChallenge = null;
+        state.isChallenge = false;
+      }
+    });
+  }
+});
+
+/* ============================================================
+   PHASE 9 — END
+   ============================================================ */
+
+console.log("Panda Kick v6 loaded. Challenges ready.");
