@@ -18,6 +18,10 @@ export default {
       });
 
     try {
+      /* ============================================================
+         SCORES — PUBLIC LEADERBOARD
+         ============================================================ */
+
       if (url.pathname === "/score" && request.method === "POST") {
         const body = await request.json();
         const name = String(body.name || "Player").slice(0, 20);
@@ -50,26 +54,36 @@ export default {
         return json({ ok: true, scores: results || [] });
       }
 
+      /* ============================================================
+         AUTH
+         ============================================================ */
+
       if (url.pathname === "/signup" && request.method === "POST") {
         const body = await request.json();
         const username = String(body.username || "").trim().toLowerCase();
         const pin = String(body.pin || "");
         const country = String(body.country || "").slice(0, 30);
 
-        if (username.length < 3 || username.length > 20)
+        if (username.length < 3 || username.length > 20) {
           return json({ ok: false, error: "Username must be 3-20 characters" }, 400);
-        if (!/^[a-z0-9_]+$/.test(username))
+        }
+        if (!/^[a-z0-9_]+$/.test(username)) {
           return json({ ok: false, error: "Username: letters, numbers, _ only" }, 400);
-        if (!/^\d{4}$/.test(pin))
+        }
+        if (!/^\d{4}$/.test(pin)) {
           return json({ ok: false, error: "PIN must be 4 digits" }, 400);
+        }
 
         const existing = await env.DB.prepare(
           "SELECT id FROM users WHERE username = ?"
         ).bind(username).first();
 
-        if (existing) return json({ ok: false, error: "Username taken" }, 409);
+        if (existing) {
+          return json({ ok: false, error: "Username taken" }, 409);
+        }
 
         const pinHash = await hashPin(pin);
+
         await env.DB.prepare(
           "INSERT INTO users (username, pin_hash, country, created_at) VALUES (?, ?, ?, ?)"
         ).bind(username, pinHash, country, Date.now()).run();
@@ -93,8 +107,9 @@ export default {
         if (!user) return json({ ok: false, error: "User not found" }, 404);
 
         const pinHash = await hashPin(pin);
-        if (pinHash !== user.pin_hash)
+        if (pinHash !== user.pin_hash) {
           return json({ ok: false, error: "Wrong PIN" }, 401);
+        }
 
         return json({
           ok: true,
@@ -109,13 +124,16 @@ export default {
         });
       }
 
+      /* ============================================================
+         FRIENDS
+         ============================================================ */
+
       if (url.pathname === "/friend/request" && request.method === "POST") {
         const body = await request.json();
         const userId = parseInt(body.user_id, 10);
         const targetUsername = String(body.target || "").trim().toLowerCase();
 
-        if (!userId || !targetUsername)
-          return json({ ok: false, error: "Missing data" }, 400);
+        if (!userId || !targetUsername) return json({ ok: false, error: "Missing data" }, 400);
 
         const target = await env.DB.prepare(
           "SELECT id, username FROM users WHERE username = ?"
@@ -157,8 +175,7 @@ export default {
         const userId = parseInt(body.user_id, 10);
         const requestId = parseInt(body.request_id, 10);
 
-        if (!userId || !requestId)
-          return json({ ok: false, error: "Missing data" }, 400);
+        if (!userId || !requestId) return json({ ok: false, error: "Missing data" }, 400);
 
         const req = await env.DB.prepare(
           "SELECT id FROM friends WHERE id = ? AND friend_id = ? AND status = 'pending'"
@@ -188,6 +205,124 @@ export default {
 
         return json({ ok: true, friends: results || [] });
       }
+
+      /* ============================================================
+         CHALLENGES
+         ============================================================ */
+
+      if (url.pathname === "/challenge/create" && request.method === "POST") {
+        const body = await request.json();
+        const userId = parseInt(body.user_id, 10);
+        const username = String(body.username || "").slice(0, 20);
+        const questionIds = Array.isArray(body.question_ids) ? body.question_ids : [];
+
+        if (!userId || !username || questionIds.length !== 20) {
+          return json({ ok: false, error: "Need 20 question ids + username" }, 400);
+        }
+
+        let code = "";
+        for (let attempt = 0; attempt < 5; attempt++) {
+          const candidate = "PK" + Math.random().toString(36).slice(2, 7).toUpperCase();
+          const exists = await env.DB.prepare(
+            "SELECT id FROM challenges WHERE code = ?"
+          ).bind(candidate).first();
+          if (!exists) { code = candidate; break; }
+        }
+        if (!code) return json({ ok: false, error: "Could not generate code" }, 500);
+
+        const result = await env.DB.prepare(
+          "INSERT INTO challenges (code, creator_id, creator_name, question_ids, status, created_at) VALUES (?, ?, ?, ?, 'open', ?)"
+        ).bind(code, userId, username, JSON.stringify(questionIds), Date.now()).run();
+
+        return json({ ok: true, code, challenge_id: result.meta.last_row_id });
+      }
+
+      if (url.pathname === "/challenge/join" && request.method === "POST") {
+        const body = await request.json();
+        const code = String(body.code || "").trim().toUpperCase();
+        if (!code) return json({ ok: false, error: "Enter a code" }, 400);
+
+        const ch = await env.DB.prepare(
+          "SELECT id, code, creator_name, question_ids, status, created_at FROM challenges WHERE code = ?"
+        ).bind(code).first();
+
+        if (!ch) return json({ ok: false, error: "Challenge not found" }, 404);
+
+        return json({
+          ok: true,
+          challenge: {
+            id: ch.id,
+            code: ch.code,
+            creator_name: ch.creator_name,
+            question_ids: JSON.parse(ch.question_ids),
+            status: ch.status
+          }
+        });
+      }
+
+      if (url.pathname === "/challenge/submit" && request.method === "POST") {
+        const body = await request.json();
+        const challengeId = parseInt(body.challenge_id, 10);
+        const userId = parseInt(body.user_id, 10) || null;
+        const username = String(body.username || "Player").slice(0, 20);
+        const score = Math.max(0, Math.min(20, parseInt(body.score || 0, 10)));
+        const total = Math.max(1, Math.min(20, parseInt(body.total || 20, 10)));
+
+        if (!challengeId) return json({ ok: false, error: "Missing challenge_id" }, 400);
+
+        const ch = await env.DB.prepare(
+          "SELECT creator_id FROM challenges WHERE id = ?"
+        ).bind(challengeId).first();
+
+        if (!ch) return json({ ok: false, error: "Challenge not found" }, 404);
+
+        const isCreator = ch.creator_id === userId ? 1 : 0;
+
+        await env.DB.prepare(
+          "INSERT INTO challenge_scores (challenge_id, user_id, username, score, total, is_creator, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        ).bind(challengeId, userId, username, score, total, isCreator, Date.now()).run();
+
+        return json({ ok: true });
+      }
+
+      if (url.pathname === "/challenge/results" && request.method === "GET") {
+        const challengeId = parseInt(url.searchParams.get("challenge_id"), 10);
+        if (!challengeId) return json({ ok: false, error: "Missing challenge_id" }, 400);
+
+        const ch = await env.DB.prepare(
+          "SELECT id, code, creator_name FROM challenges WHERE id = ?"
+        ).bind(challengeId).first();
+        if (!ch) return json({ ok: false, error: "Not found" }, 404);
+
+        const { results } = await env.DB.prepare(
+          `SELECT username, score, total, is_creator, created_at
+           FROM challenge_scores
+           WHERE challenge_id = ?
+           ORDER BY (CAST(score AS REAL)/total) DESC, created_at ASC`
+        ).bind(challengeId).all();
+
+        return json({ ok: true, challenge: ch, scores: results || [] });
+      }
+
+      if (url.pathname === "/challenge/mine" && request.method === "GET") {
+        const username = String(url.searchParams.get("username") || "").trim().toLowerCase();
+        if (!username) return json({ ok: false, error: "Missing username" }, 400);
+
+        const { results } = await env.DB.prepare(
+          `SELECT DISTINCT c.id, c.code, c.creator_name, c.created_at, c.status
+           FROM challenges c
+           LEFT JOIN challenge_scores s ON s.challenge_id = c.id
+           WHERE LOWER(c.creator_name) = ? OR LOWER(s.username) = ?
+           ORDER BY c.created_at DESC
+           LIMIT 50`
+        ).bind(username, username).all();
+
+        return json({ ok: true, challenges: results || [] });
+      }
+
+      /* ============================================================
+         NOTIFICATIONS
+         ============================================================ */
 
       if (url.pathname === "/notifications" && request.method === "GET") {
         const { results } = await env.DB.prepare(
@@ -228,4 +363,4 @@ async function hashPin(pin) {
   const data = encoder.encode("panda-kick-salt::" + pin);
   const buffer = await crypto.subtle.digest("SHA-256", data);
   return [...new Uint8Array(buffer)].map(b => b.toString(16).padStart(2, "0")).join("");
-                               }
+}
