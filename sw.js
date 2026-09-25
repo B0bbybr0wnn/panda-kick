@@ -1,4 +1,4 @@
-const CACHE = "panda-kick-v7";
+const CACHE = "panda-kick-v8";
 const ASSETS = [
   "/",
   "/index.html",
