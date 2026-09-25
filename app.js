@@ -489,6 +489,8 @@ function showScreen(name, push = true) {
 
   if (push && state.history[state.history.length - 1] !== name) {
     state.history.push(name);
+    // Push a browser history entry so phone back button stays in-app
+    try { history.pushState({ screen: name }, "", location.href); } catch (e) {}
   }
 
   if (name === "game") startAmbience();
@@ -502,7 +504,6 @@ function showScreen(name, push = true) {
 function goBack() {
   const current = state.history[state.history.length - 1];
 
-  // Home → confirm exit
   if (current === "home") {
     if (confirm("Leave Panda Kick?")) {
       window.history.go(-2);
@@ -510,7 +511,6 @@ function goBack() {
     return;
   }
 
-  // In game unanswered → confirm
   if (current === "game" && !state.answered) {
     if (!confirm("Leave the game? Progress will be lost.")) return;
     state.isChallenge = false;
@@ -518,7 +518,6 @@ function goBack() {
     state.pool = [];
   }
 
-  // Anywhere else → always go home
   state.history = ["home"];
   showScreen("home", false);
   play(el.sfxTap, false);
