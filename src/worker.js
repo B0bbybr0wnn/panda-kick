@@ -18,9 +18,7 @@ export default {
       });
 
     try {
-      /* ============================================================
-         SCORES — PUBLIC LEADERBOARD
-         ============================================================ */
+      /* ============ SCORES ============ */
 
       if (url.pathname === "/score" && request.method === "POST") {
         const body = await request.json();
@@ -54,9 +52,7 @@ export default {
         return json({ ok: true, scores: results || [] });
       }
 
-      /* ============================================================
-         AUTH
-         ============================================================ */
+      /* ============ AUTH ============ */
 
       if (url.pathname === "/signup" && request.method === "POST") {
         const body = await request.json();
@@ -78,9 +74,7 @@ export default {
           "SELECT id FROM users WHERE username = ?"
         ).bind(username).first();
 
-        if (existing) {
-          return json({ ok: false, error: "Username taken" }, 409);
-        }
+        if (existing) return json({ ok: false, error: "Username taken" }, 409);
 
         const pinHash = await hashPin(pin);
 
@@ -107,9 +101,7 @@ export default {
         if (!user) return json({ ok: false, error: "User not found" }, 404);
 
         const pinHash = await hashPin(pin);
-        if (pinHash !== user.pin_hash) {
-          return json({ ok: false, error: "Wrong PIN" }, 401);
-        }
+        if (pinHash !== user.pin_hash) return json({ ok: false, error: "Wrong PIN" }, 401);
 
         return json({
           ok: true,
@@ -124,9 +116,91 @@ export default {
         });
       }
 
-      /* ============================================================
-         FRIENDS
-         ============================================================ */
+      if (url.pathname === "/user/sync" && request.method === "POST") {
+        const body = await request.json();
+        const userId = parseInt(body.user_id, 10);
+        if (!userId) return json({ ok: false, error: "Missing user_id" }, 400);
+
+        const coins = Math.max(0, parseInt(body.coins || 0, 10));
+        const premium = body.premium ? 1 : 0;
+        const avatar = String(body.avatar || "ball").slice(0, 30);
+        const country = String(body.country || "").slice(0, 30);
+
+        await env.DB.prepare(
+          "UPDATE users SET coins = ?, premium = ?, avatar = ?, country = ? WHERE id = ?"
+        ).bind(coins, premium, avatar, country, userId).run();
+
+        return json({ ok: true });
+      }
+
+      /* ============ PAYSTACK ============ */
+
+      if (url.pathname === "/paystack/init" && request.method === "POST") {
+        const body = await request.json();
+        const userId = parseInt(body.user_id, 10);
+        const username = String(body.username || "").slice(0, 20);
+        const email = String(body.email || `${username}@pandakick.app`).slice(0, 80);
+
+        if (!userId) return json({ ok: false, error: "Missing user_id" }, 400);
+        if (!env.PAYSTACK_SECRET_KEY) return json({ ok: false, error: "Paystack not configured" }, 500);
+
+        const amountKobo = 250000;
+
+        const psRes = await fetch("https://api.paystack.co/transaction/initialize", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${env.PAYSTACK_SECRET_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            email,
+            amount: amountKobo,
+            currency: "NGN",
+            metadata: { user_id: userId, username },
+            callback_url: "https://panda-kick.pages.dev/?paystack=done"
+          })
+        });
+
+        const psData = await psRes.json();
+        if (!psData.status) {
+          return json({ ok: false, error: psData.message || "Could not init payment" }, 400);
+        }
+
+        return json({
+          ok: true,
+          authorization_url: psData.data.authorization_url,
+          reference: psData.data.reference
+        });
+      }
+
+      if (url.pathname === "/paystack/verify" && request.method === "GET") {
+        const reference = url.searchParams.get("reference");
+        if (!reference) return json({ ok: false, error: "Missing reference" }, 400);
+        if (!env.PAYSTACK_SECRET_KEY) return json({ ok: false, error: "Paystack not configured" }, 500);
+
+        const psRes = await fetch(
+          "https://api.paystack.co/transaction/verify/" + encodeURIComponent(reference),
+          { headers: { Authorization: `Bearer ${env.PAYSTACK_SECRET_KEY}` } }
+        );
+
+        const psData = await psRes.json();
+        if (!psData.status || psData.data.status !== "success") {
+          return json({ ok: false, error: "Payment not successful" }, 400);
+        }
+
+        const meta = psData.data.metadata || {};
+        const userId = parseInt(meta.user_id, 10);
+        if (!userId) return json({ ok: false, error: "Missing user_id in metadata" }, 400);
+
+        await env.DB.prepare(
+          "UPDATE users SET premium = 1, coins = coins + 500 WHERE id = ?"
+        ).bind(userId).run();
+
+        return json({ ok: true, premium: true });
+      }
+
+/* ⬇️ NEXT CHUNK BELOW ⬇️ */
+          /* ============ FRIENDS ============ */
 
       if (url.pathname === "/friend/request" && request.method === "POST") {
         const body = await request.json();
@@ -143,7 +217,7 @@ export default {
         if (target.id === userId) return json({ ok: false, error: "Can't add yourself" }, 400);
 
         const existing = await env.DB.prepare(
-          "SELECT id, status FROM friends WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)"
+          "SELECT id FROM friends WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)"
         ).bind(userId, target.id, target.id, userId).first();
 
         if (existing) return json({ ok: false, error: "Request already exists" }, 409);
@@ -206,9 +280,7 @@ export default {
         return json({ ok: true, friends: results || [] });
       }
 
-      /* ============================================================
-         CHALLENGES
-         ============================================================ */
+      /* ============ CHALLENGES ============ */
 
       if (url.pathname === "/challenge/create" && request.method === "POST") {
         const body = await request.json();
@@ -320,9 +392,7 @@ export default {
         return json({ ok: true, challenges: results || [] });
       }
 
-      /* ============================================================
-         NOTIFICATIONS
-         ============================================================ */
+      /* ============ NOTIFICATIONS ============ */
 
       if (url.pathname === "/notifications" && request.method === "GET") {
         const { results } = await env.DB.prepare(
