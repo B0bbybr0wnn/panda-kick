@@ -23,13 +23,13 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3.2.0
-
       - name: Prepare web assets
         run: |
           mkdir -p www
-          cp -r index.html styles.css app.js icons.js data sounds manifest.json www/ || true
+          cp index.html styles.css app.js icons.js manifest.json www/
+          cp -r data www/
+          cp -r sounds www/
+          cp -r src www/ || true
 
       - name: Install Capacitor
         run: |
@@ -51,11 +51,12 @@ jobs:
       - name: Restore keystore
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
 
+      - name: Grant gradlew
+        run: chmod +x android/gradlew
+
       - name: Build debug APK
         working-directory: ./android
-        run: |
-          chmod +x ./gradlew
-          ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleDebug --no-daemon
 
       - name: Rename APK
         run: |
