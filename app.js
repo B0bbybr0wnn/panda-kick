@@ -504,20 +504,29 @@ function showScreen(name, push = true) {
 function goBack() {
   const current = state.history[state.history.length - 1];
 
+  // If we're on home and user taps back → confirm exit
   if (current === "home") {
     if (confirm("Leave Panda Kick?")) {
       window.history.go(-2);
+    } else {
+      // Re-push so back button still works next time
+      try { history.pushState({ screen: "home" }, "", location.href); } catch (e) {}
     }
     return;
   }
 
+  // If in game and unanswered → confirm
   if (current === "game" && !state.answered) {
-    if (!confirm("Leave the game? Progress will be lost.")) return;
+    if (!confirm("Leave the game? Progress will be lost.")) {
+      try { history.pushState({ screen: "game" }, "", location.href); } catch (e) {}
+      return;
+    }
     state.isChallenge = false;
     currentChallenge = null;
     state.pool = [];
   }
 
+  // Otherwise → go home (but don't push a new history entry)
   state.history = ["home"];
   showScreen("home", false);
   play(el.sfxTap, false);
