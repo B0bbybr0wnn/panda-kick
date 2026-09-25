@@ -83,10 +83,27 @@ export default {
         ).bind(username, pinHash, country, Date.now()).run();
 
         const user = await env.DB.prepare(
-          "SELECT id, username, country, avatar, coins, premium FROM users WHERE username = ?"
+          "SELECT * FROM users WHERE username = ?"
         ).bind(username).first();
 
-        return json({ ok: true, user });
+        return json({
+          ok: true,
+          user: {
+            id: user.id,
+            username: user.username,
+            country: user.country || "",
+            avatar: user.avatar || "ball",
+            coins: user.coins || 100,
+            premium: user.premium || 0,
+            streak: user.streak || 0,
+            best: user.best || "0/20",
+            games: user.games || 0,
+            daily_streak: user.daily_streak || 0,
+            last_daily: user.last_daily || "",
+            achievements: safeJSON(user.achievements, []),
+            unlocked_avatars: safeJSON(user.unlocked_avatars, ["ball","trophy","boot","whistle","stadium","jersey","gloves","net","card","shield"])
+          }
+        });
       }
 
       if (url.pathname === "/login" && request.method === "POST") {
@@ -108,10 +125,17 @@ export default {
           user: {
             id: user.id,
             username: user.username,
-            country: user.country,
-            avatar: user.avatar,
-            coins: user.coins,
-            premium: user.premium
+            country: user.country || "",
+            avatar: user.avatar || "ball",
+            coins: user.coins || 100,
+            premium: user.premium || 0,
+            streak: user.streak || 0,
+            best: user.best || "0/20",
+            games: user.games || 0,
+            daily_streak: user.daily_streak || 0,
+            last_daily: user.last_daily || "",
+            achievements: safeJSON(user.achievements, []),
+            unlocked_avatars: safeJSON(user.unlocked_avatars, ["ball","trophy","boot","whistle","stadium","jersey","gloves","net","card","shield"])
           }
         });
       }
@@ -125,10 +149,19 @@ export default {
         const premium = body.premium ? 1 : 0;
         const avatar = String(body.avatar || "ball").slice(0, 30);
         const country = String(body.country || "").slice(0, 30);
+        const streak = Math.max(0, parseInt(body.streak || 0, 10));
+        const best = String(body.best || "0/20").slice(0, 12);
+        const games = Math.max(0, parseInt(body.games || 0, 10));
+        const dailyStreak = Math.max(0, parseInt(body.daily_streak || 0, 10));
+        const lastDaily = String(body.last_daily || "").slice(0, 20);
+        const achievements = JSON.stringify(body.achievements || []);
+        const unlockedAvatars = JSON.stringify(body.unlocked_avatars || []);
 
         await env.DB.prepare(
-          "UPDATE users SET coins = ?, premium = ?, avatar = ?, country = ? WHERE id = ?"
-        ).bind(coins, premium, avatar, country, userId).run();
+          `UPDATE users SET coins = ?, premium = ?, avatar = ?, country = ?,
+           streak = ?, best = ?, games = ?, daily_streak = ?, last_daily = ?,
+           achievements = ?, unlocked_avatars = ? WHERE id = ?`
+        ).bind(coins, premium, avatar, country, streak, best, games, dailyStreak, lastDaily, achievements, unlockedAvatars, userId).run();
 
         return json({ ok: true });
       }
@@ -427,6 +460,16 @@ export default {
     ).bind(today, top.username, top.score, top.total).run();
   }
 };
+
+function safeJSON(str, fallback) {
+  try {
+    if (!str) return fallback;
+    const parsed = JSON.parse(str);
+    return parsed === null || parsed === undefined ? fallback : parsed;
+  } catch (e) {
+    return fallback;
+  }
+}
 
 async function hashPin(pin) {
   const encoder = new TextEncoder();
