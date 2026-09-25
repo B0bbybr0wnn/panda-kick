@@ -1,0 +1,23 @@
+{
+  "appId": "com.pandakick.trivia",
+  "appName": "Panda Kick",
+  "webDir": ".",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://panda-kick.pages.dev",
+    "cleartext": false,
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#050608",
+      "showSpinner": false
+    }
+  }
+}
