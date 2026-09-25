@@ -2,6 +2,8 @@ import { QUESTIONS } from "./data/questions.js";
 import { AVATARS, FREE_AVATARS, PREMIUM_AVATARS, ALL_AVATARS } from "./icons.js";
 
 const WORKER_URL = "https://panda-kick-api.bobbyjohon8585.workers.dev";
+const PAYSTACK_PUBLIC_KEY = "pk_test_4ccfb61f612b02627306498c3d3254939880f72b";
+const PREMIUM_PRICE_NGN = 2500;
 const QUESTIONS_PER_GAME = 20;
 const DAILY_QUESTIONS = 10;
 
@@ -46,6 +48,7 @@ const state = {
 };
 
 let currentChallenge = null;
+let pendingPaystackRef = null;
 
 /* ============================================================
    DOM
@@ -83,8 +86,6 @@ const screens = {
 
 const el = {
   splash:        $("splash"),
-
-  // onboarding
   inputName:     $("input-name"),
   inputCountry:  $("input-country"),
   onboard1:      $("onboard-next-1"),
@@ -92,7 +93,6 @@ const el = {
   onboardSteps:  document.querySelectorAll(".onboard-step"),
   nameHint:      $("name-hint"),
 
-  // signup
   signupUsername:$("signup-username"),
   signupPin:     $("signup-pin"),
   signupCountry: $("signup-country"),
@@ -100,14 +100,12 @@ const el = {
   signupBtn:     $("signup-btn"),
   gotoLogin:     $("goto-login"),
 
-  // signin
   signinUsername:$("signin-username"),
   signinPin:     $("signin-pin"),
   signinHint:    $("signin-hint"),
   signinBtn:     $("signin-btn"),
   gotoSignup:    $("goto-signup"),
 
-  // home
   bellBtn:       $("bell-btn"),
   bellBadge:     $("bell-badge"),
   avatarInitial: $("avatar-initial"),
@@ -123,7 +121,6 @@ const el = {
   categoryPickBtn:$("category-pick-btn"),
   diffBtns:      document.querySelectorAll(".diff-btn"),
 
-  // profile
   profileInitial:$("profile-initial"),
   profileAvatar: $("profile-avatar"),
   profileName:   $("profile-name"),
@@ -139,7 +136,6 @@ const el = {
   premiumBtnProfile:$("premium-btn-profile"),
   challengesProfileBtn: $("challenges-profile-btn"),
 
-  // settings-profile
   settingsProfileBack:$("settings-profile-back"),
   avatarGrid:    $("avatar-grid"),
   avatarCount:   $("avatar-count"),
@@ -151,44 +147,32 @@ const el = {
   photoInput:    $("photo-input"),
   photoHint:     $("photo-hint"),
 
-  // category
   categoryBack:  $("category-back"),
   categoryItems: document.querySelectorAll(".cat-item"),
-
-  // leaderboard
   leaderboardBack:$("leaderboard-back"),
   lbList:        $("lb-list"),
   lbTabs:        document.querySelectorAll(".lb-tab"),
 
-  // daily
   dailyBack:     $("daily-back"),
   dailyStreakNum:$("daily-streak-num"),
   dailyStart:    $("daily-start"),
   dailyDone:     $("daily-done"),
 
-  // store
   storeBack:     $("store-back"),
   storeCoins:    $("store-coins"),
   storeTabs:     document.querySelectorAll(".store-tab"),
   storeList:     $("store-list"),
 
-  // coinshop
   coinshopBack:  $("coinshop-back"),
   coinshopBalance:$("coinshop-balance"),
-
-  // achievements
   achBack:       $("ach-back"),
-
-  // trophies
   trophiesBack:  $("trophies-back"),
   trophyAchGrid: $("trophy-ach-grid"),
   trophyMileGrid:$("trophy-mile-grid"),
 
-  // notifications
   notifBack:     $("notif-back"),
   notifPanel:    $("notif-panel"),
 
-  // friends
   friendsBack:   $("friends-back"),
   friendTabs:    document.querySelectorAll(".friend-tab"),
   ftabList:      $("ftab-list"),
@@ -200,19 +184,16 @@ const el = {
   addFriendBtn:  $("add-friend-btn"),
   addFriendHint: $("add-friend-hint"),
 
-  // settings
   settingsBack:  $("settings-back"),
   toggleSfx:     $("toggle-sfx"),
   toggleAmb:     $("toggle-amb"),
   toggleHaptic:  $("toggle-haptic"),
   signoutBtn:    $("signout-btn"),
 
-  // premium
   premiumBack:   $("premium-back"),
   premiumBuy:    $("premium-buy"),
   premiumRestore:$("premium-restore"),
 
-  // game
   currentDiff:   $("current-diff"),
   gameCoins:     $("game-coins"),
   scoreDisplay:  $("score-display"),
@@ -225,7 +206,6 @@ const el = {
   hintBtn:       $("hint-btn"),
   skipBtn:       $("skip-btn"),
 
-  // end
   finalScore:    $("final-score"),
   endMsg:        $("end-msg"),
   endCoins:      $("end-coins"),
@@ -235,7 +215,6 @@ const el = {
   challengeEndBtn: $("challenge-end-btn"),
   confetti:      $("confetti"),
 
-  // share
   shareBack:     $("share-back"),
   shareScore:    $("share-score"),
   shareMsg:      $("share-msg"),
@@ -245,14 +224,10 @@ const el = {
   shareCopy:     $("share-copy"),
   shareImage:    $("share-image"),
 
-  // ad
   adOverlay:     $("ad-overlay"),
   adCountdown:   $("ad-countdown"),
-
-  // toast
   toast:         $("toast"),
 
-  // sounds
   sfxCorrect:    $("sfx-correct"),
   sfxWrong:      $("sfx-wrong"),
   sfxAmbience:   $("sfx-ambience"),
@@ -260,31 +235,26 @@ const el = {
   sfxTap:        $("sfx-tap"),
   sfxEnter:      $("sfx-enter"),
 
-  // challenge
   chBack:          $("challenges-back"),
   chCreateBtn:     $("ch-create-btn"),
   chJoinBtn:       $("ch-join-btn"),
   chMineBtn:       $("ch-mine-btn"),
-
   chCreatedBack:   $("ch-created-back"),
   chCodeDisplay:   $("ch-code-display"),
   chCopyCode:      $("ch-copy-code"),
   chShareWhatsapp: $("ch-share-whatsapp"),
   chViewResults:   $("ch-view-results"),
   chCreatedHome:   $("ch-created-home"),
-
   chJoinBack:      $("ch-join-back"),
   chJoinInput:     $("ch-join-input"),
   chJoinSubmit:    $("ch-join-submit"),
   chJoinCancel:    $("ch-join-cancel"),
-
   chResultBack:    $("ch-result-back"),
   chResultTitle:   $("ch-result-title"),
   chResultCode:    $("ch-result-code"),
   chVsBox:         $("ch-vs-box"),
   chResultShare:   $("ch-result-share"),
   chResultHome:    $("ch-result-home"),
-
   chMineBack:      $("ch-mine-back"),
   chMineList:      $("ch-mine-list")
 };
@@ -337,10 +307,6 @@ function stopAllSounds() {
   stop(el.sfxWrong);
   stop(el.sfxTap);
 }
-
-/* ============================================================
-   HAPTIC
-   ============================================================ */
 
 function buzz(pattern = 12) {
   if (!state.hapticOn) return;
@@ -410,6 +376,24 @@ function saveAll() {
   localStorage.setItem("pk_haptic", state.hapticOn ? "on" : "off");
 }
 
+// Sync important fields to D1
+async function syncUserToServer() {
+  if (!state.userId || !state.loggedIn) return;
+  try {
+    await fetch(WORKER_URL + "/user/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: state.userId,
+        coins: state.coins,
+        premium: state.premium ? 1 : 0,
+        avatar: state.avatar,
+        country: state.country
+      })
+    });
+  } catch (e) {}
+}
+
 /* ============================================================
    AVATAR RENDER
    ============================================================ */
@@ -473,10 +457,32 @@ function showScreen(name, push = true) {
   else stopAmbience();
 }
 
+/* ============================================================
+   BACK BUTTON — new behavior
+   ============================================================ */
+
 function goBack() {
-  state.history.pop();
-  const prev = state.history[state.history.length - 1] || "home";
-  showScreen(prev, false);
+  const current = state.history[state.history.length - 1];
+
+  // If on home and user hits back → confirm exit
+  if (current === "home") {
+    if (confirm("Leave Panda Kick?")) {
+      // Try to close / go back in browser history
+      window.history.go(-2);
+    }
+    return;
+  }
+
+  // If in a game and unanswered → confirm leaving
+  if (current === "game" && !state.answered) {
+    if (!confirm("Leave the game? Progress will be lost.")) return;
+    state.isChallenge = false;
+    currentChallenge = null;
+  }
+
+  // Otherwise, always go to home
+  state.history = ["home"];
+  showScreen("home", false);
   play(el.sfxTap, false);
 }
 
@@ -494,6 +500,43 @@ document.addEventListener("visibilitychange", () => {
 });
 
 window.addEventListener("blur", () => stopAllSounds());
+
+/* ============================================================
+   PAYSTACK CALLBACK HANDLER
+   ============================================================ */
+
+async function checkPaystackCallback() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("paystack") !== "done") return;
+
+  const ref = localStorage.getItem("pk_last_paystack_ref");
+  if (!ref) return;
+
+  showToast("Verifying payment…", "");
+
+  try {
+    const res = await fetch(WORKER_URL + "/paystack/verify?reference=" + encodeURIComponent(ref));
+    const data = await res.json();
+
+    if (data.ok && data.premium) {
+      state.premium = true;
+      state.coins += 500;
+      saveAll();
+      refreshHomeUI();
+      showToast("💎 Premium unlocked! +500 bonus coins", "success");
+      play(el.sfxCorrect);
+      buzz([30, 50, 30]);
+    } else {
+      showToast(data.error || "Payment not verified", "error");
+    }
+  } catch (e) {
+    showToast("Network error verifying payment", "error");
+  }
+
+  localStorage.removeItem("pk_last_paystack_ref");
+  // Clean URL
+  window.history.replaceState({}, "", "/");
+}
 
 /* ⬇️ NEXT CHUNK BELOW ⬇️ */
 /* ============================================================
@@ -692,16 +735,12 @@ async function endGame() {
   checkAchievements(pct);
 
   const hist = JSON.parse(localStorage.getItem("pk_history") || "[]");
-  hist.push({
-    name: state.name || "Player",
-    score: state.score,
-    total,
-    date: Date.now()
-  });
+  hist.push({ name: state.name || "Player", score: state.score, total, date: Date.now() });
   localStorage.setItem("pk_history", JSON.stringify(hist.slice(-100)));
 
   saveAll();
   refreshHomeUI();
+  syncUserToServer();
 
   if (wasChallenge && currentChallenge) {
     try {
@@ -783,7 +822,7 @@ function fireConfetti() {
 
 /* ⬇️ NEXT CHUNK BELOW ⬇️ */
 /* ============================================================
-   TROPHIES — icons + data
+   TROPHIES
    ============================================================ */
 
 const TROPHY_ICONS = {
@@ -806,15 +845,15 @@ const TROPHY_ICONS = {
 };
 
 const MILESTONES = [
-  { id: "games-10",   icon: "rookie",         name: "Rookie",          sub: "10 games played",   check: () => state.games >= 10 },
-  { id: "games-50",   icon: "firstteam",      name: "First Team",      sub: "50 games played",   check: () => state.games >= 50 },
-  { id: "games-100",  icon: "veteran",        name: "Veteran",         sub: "100 games played",  check: () => state.games >= 100 },
-  { id: "games-500",  icon: "footballLegend", name: "Football Legend", sub: "500 games played",  check: () => state.games >= 500 },
-  { id: "coins-500",  icon: "playmaker",      name: "Playmaker",       sub: "500 coins",         check: () => state.coins >= 500 },
-  { id: "coins-2000", icon: "ballonDor",      name: "Ballon d'Or",     sub: "2000 coins",        check: () => state.coins >= 2000 },
-  { id: "streak-3",   icon: "winningrun",     name: "Winning Run",     sub: "3-day streak",      check: () => state.streak >= 3 },
-  { id: "streak-30",  icon: "unbeaten",       name: "Unbeaten",        sub: "30-day streak",     check: () => state.streak >= 30 },
-  { id: "daily-30",   icon: "dailyKing",      name: "Daily King",      sub: "30 dailies",        check: () => state.dailyStreak >= 30 }
+  { id: "games-10",   icon: "rookie",         name: "Rookie",          sub: "10 games",   check: () => state.games >= 10 },
+  { id: "games-50",   icon: "firstteam",      name: "First Team",      sub: "50 games",   check: () => state.games >= 50 },
+  { id: "games-100",  icon: "veteran",        name: "Veteran",         sub: "100 games",  check: () => state.games >= 100 },
+  { id: "games-500",  icon: "footballLegend", name: "Football Legend", sub: "500 games",  check: () => state.games >= 500 },
+  { id: "coins-500",  icon: "playmaker",      name: "Playmaker",       sub: "500 coins",  check: () => state.coins >= 500 },
+  { id: "coins-2000", icon: "ballonDor",      name: "Ballon d'Or",     sub: "2000 coins", check: () => state.coins >= 2000 },
+  { id: "streak-3",   icon: "winningrun",     name: "Winning Run",     sub: "3-day streak", check: () => state.streak >= 3 },
+  { id: "streak-30",  icon: "unbeaten",       name: "Unbeaten",        sub: "30-day streak", check: () => state.streak >= 30 },
+  { id: "daily-30",   icon: "dailyKing",      name: "Daily King",      sub: "30 dailies", check: () => state.dailyStreak >= 30 }
 ];
 
 const ACHIEVEMENTS = [
@@ -825,10 +864,6 @@ const ACHIEVEMENTS = [
   { id: "coin-master", icon: "maestro",  name: "Midfield Maestro",  sub: "1000 coins" },
   { id: "daily-7",     icon: "armband",  name: "Captain's Armband", sub: "7 dailies" }
 ];
-
-/* ============================================================
-   ACHIEVEMENTS + TROPHIES LOGIC
-   ============================================================ */
 
 function unlockAch(id) {
   if (state.achievements.includes(id)) return;
@@ -906,9 +941,7 @@ function renderAvatarPicker() {
     cell.addEventListener("click", () => {
       if (!isUnlocked) {
         if (isPremium && !state.premium) {
-          if (confirm("Premium avatar. Go Premium to unlock all 15?")) {
-            showScreen("premium");
-          }
+          if (confirm("Premium avatar. Go Premium to unlock all 15?")) showScreen("premium");
           return;
         }
       }
@@ -916,6 +949,7 @@ function renderAvatarPicker() {
       state.photo = "";
       saveAll();
       refreshHomeUI();
+      syncUserToServer();
       renderAvatarPicker();
       buzz(15);
       play(el.sfxTap, false);
@@ -937,38 +971,15 @@ function renderStore(tab = "coins") {
     el.storeList.innerHTML = `
       <div class="store-item">
         <div class="store-icon">💰</div>
-        <div class="store-info">
-          <div class="store-name">+100 Coins</div>
-          <div class="store-sub">Watch a short ad</div>
-        </div>
+        <div class="store-info"><div class="store-name">+100 Coins</div><div class="store-sub">Watch a short ad</div></div>
         <button class="store-btn" data-reward="100">FREE</button>
       </div>
       <div class="store-item">
         <div class="store-icon">💰💰</div>
-        <div class="store-info">
-          <div class="store-name">+500 Coins</div>
-          <div class="store-sub">Watch a longer ad</div>
-        </div>
+        <div class="store-info"><div class="store-name">+500 Coins</div><div class="store-sub">Watch a longer ad</div></div>
         <button class="store-btn" data-reward="500">FREE</button>
       </div>
     `;
-    return;
-  }
-
-  if (tab === "avatars") {
-    const grid = document.createElement("div");
-    grid.className = "avatar-grid";
-    [...FREE_AVATARS, ...PREMIUM_AVATARS].forEach(id => {
-      const isPremium = PREMIUM_AVATARS.includes(id);
-      const isUnlocked = state.unlockedAvatars.includes(id) || (isPremium && state.premium);
-      const cell = document.createElement("div");
-      cell.className = "avatar-cell";
-      if (isPremium) cell.classList.add("premium");
-      if (!isUnlocked) cell.classList.add("locked");
-      cell.innerHTML = AVATARS[id] || AVATARS.ball;
-      grid.appendChild(cell);
-    });
-    el.storeList.appendChild(grid);
     return;
   }
 
@@ -982,21 +993,14 @@ function renderStore(tab = "coins") {
     packs.forEach(p => {
       const item = document.createElement("div");
       item.className = "store-item locked";
-      item.innerHTML = `
-        <div class="store-icon">${p.icon}</div>
-        <div class="store-info">
-          <div class="store-name">${p.name}</div>
-          <div class="store-sub">${p.sub}</div>
-        </div>
-        <button class="store-btn locked">SOON</button>
-      `;
+      item.innerHTML = `<div class="store-icon">${p.icon}</div><div class="store-info"><div class="store-name">${p.name}</div><div class="store-sub">${p.sub}</div></div><button class="store-btn locked">SOON</button>`;
       el.storeList.appendChild(item);
     });
   }
 }
 
 /* ============================================================
-   AD SIMULATION
+   AD + CLOUD
    ============================================================ */
 
 function watchAd(duration, onComplete) {
@@ -1014,10 +1018,6 @@ function watchAd(duration, onComplete) {
     }
   }, 1000);
 }
-
-/* ============================================================
-   API CALLS
-   ============================================================ */
 
 async function pushScoreToCloud(score, total) {
   if (!state.loggedIn || !state.username) return;
@@ -1058,12 +1058,12 @@ async function doSignup() {
     const data = await res.json();
     if (!data.ok) { el.signupHint.textContent = data.error || "Signup failed"; return; }
 
-    state.userId   = data.user.id;
+    state.userId = data.user.id;
     state.username = data.user.username;
-    state.name     = data.user.username;
-    state.country  = data.user.country || country;
-    state.coins    = data.user.coins || 100;
-    state.premium  = !!data.user.premium;
+    state.name = data.user.username;
+    state.country = data.user.country || country;
+    state.coins = data.user.coins || 100;
+    state.premium = !!data.user.premium;
     state.loggedIn = true;
     saveAll();
     refreshHomeUI();
@@ -1080,7 +1080,6 @@ async function doSignin() {
   const pin = el.signinPin.value.trim();
 
   if (!username || !pin) { el.signinHint.textContent = "Enter username and PIN"; return; }
-
   el.signinHint.textContent = "Signing in…";
 
   try {
@@ -1092,12 +1091,12 @@ async function doSignin() {
     const data = await res.json();
     if (!data.ok) { el.signinHint.textContent = data.error || "Login failed"; return; }
 
-    state.userId   = data.user.id;
+    state.userId = data.user.id;
     state.username = data.user.username;
-    state.name     = data.user.username;
-    state.country  = data.user.country || state.country;
-    state.coins    = data.user.coins || state.coins;
-    state.premium  = !!data.user.premium;
+    state.name = data.user.username;
+    state.country = data.user.country || state.country;
+    state.coins = data.user.coins || state.coins;
+    state.premium = !!data.user.premium;
     state.loggedIn = true;
     saveAll();
     refreshHomeUI();
@@ -1106,6 +1105,29 @@ async function doSignin() {
     showScreen("home");
   } catch (e) {
     el.signinHint.textContent = "Network error. Try again.";
+  }
+}
+
+async function doPremiumPurchase() {
+  if (!state.userId) { showToast("Sign in first", "error"); return; }
+  try {
+    showToast("Opening checkout…", "");
+    const res = await fetch(WORKER_URL + "/paystack/init", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: state.userId,
+        username: state.username,
+        email: state.username + "@pandakick.app"
+      })
+    });
+    const data = await res.json();
+    if (!data.ok) { showToast(data.error || "Could not start payment", "error"); return; }
+
+    localStorage.setItem("pk_last_paystack_ref", data.reference);
+    window.location.href = data.authorization_url;
+  } catch (e) {
+    showToast("Network error", "error");
   }
 }
 
@@ -1122,14 +1144,7 @@ async function loadLeaderboard(range = "all") {
     const isMe = entry.name === state.username;
     const row = document.createElement("div");
     row.className = "lb-row" + (isMe ? " me" : "");
-    row.innerHTML = `
-      <span class="lb-rank ${i < 3 ? 'top' : ''}">#${i + 1}</span>
-      <div class="lb-info">
-        <div class="lb-name">${entry.name}${isMe ? " (you)" : ""}</div>
-        <div class="lb-country">${entry.country || "🌍"}</div>
-      </div>
-      <span class="lb-score">${entry.score}/${entry.total}</span>
-    `;
+    row.innerHTML = `<span class="lb-rank ${i < 3 ? 'top' : ''}">#${i + 1}</span><div class="lb-info"><div class="lb-name">${entry.name}${isMe ? " (you)" : ""}</div><div class="lb-country">${entry.country || "🌍"}</div></div><span class="lb-score">${entry.score}/${entry.total}</span>`;
     el.lbList.appendChild(row);
   });
 }
@@ -1148,13 +1163,7 @@ async function loadFriends() {
     data.friends.forEach(f => {
       const item = document.createElement("div");
       item.className = "friend-item";
-      item.innerHTML = `
-        <div class="friend-avatar-mini">${AVATARS[f.avatar] || AVATARS.ball}</div>
-        <div class="friend-info">
-          <div class="friend-name">${f.username}</div>
-          <div class="friend-sub">${f.country || "🌍"} · 💰 ${f.coins || 0}</div>
-        </div>
-      `;
+      item.innerHTML = `<div class="friend-avatar-mini">${AVATARS[f.avatar] || AVATARS.ball}</div><div class="friend-info"><div class="friend-name">${f.username}</div><div class="friend-sub">${f.country || "🌍"} · 💰 ${f.coins || 0}</div></div>`;
       el.friendList.appendChild(item);
     });
   } catch (e) {
@@ -1162,6 +1171,7 @@ async function loadFriends() {
   }
 }
 
+/* ⬇️ NEXT CHUNK BELOW ⬇️ */
 async function loadFriendRequests() {
   if (!state.userId || !el.friendRequests) return;
   el.friendRequests.innerHTML = `<div class="lb-loading"><div class="lb-spinner"></div></div>`;
@@ -1176,14 +1186,7 @@ async function loadFriendRequests() {
     data.requests.forEach(r => {
       const item = document.createElement("div");
       item.className = "friend-item";
-      item.innerHTML = `
-        <div class="friend-avatar-mini">${AVATARS.ball}</div>
-        <div class="friend-info">
-          <div class="friend-name">${r.from_username}</div>
-          <div class="friend-sub">wants to be friends</div>
-        </div>
-        <button class="friend-action" data-reqid="${r.id}">ACCEPT</button>
-      `;
+      item.innerHTML = `<div class="friend-avatar-mini">${AVATARS.ball}</div><div class="friend-info"><div class="friend-name">${r.from_username}</div><div class="friend-sub">wants to be friends</div></div><button class="friend-action" data-reqid="${r.id}">ACCEPT</button>`;
       item.querySelector(".friend-action").addEventListener("click", async () => {
         try {
           await fetch(WORKER_URL + "/friend/accept", {
@@ -1191,11 +1194,9 @@ async function loadFriendRequests() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ user_id: state.userId, request_id: r.id })
           });
-          play(el.sfxCorrect);
-          buzz(20);
+          play(el.sfxCorrect); buzz(20);
           showToast("Friend added!", "success");
-          loadFriendRequests();
-          loadFriends();
+          loadFriendRequests(); loadFriends();
         } catch (e) {}
       });
       el.friendRequests.appendChild(item);
@@ -1210,9 +1211,7 @@ async function sendFriendRequest() {
   if (!target) { el.addFriendHint.textContent = "Enter a username"; return; }
   if (!state.userId) { el.addFriendHint.textContent = "Sign in first"; return; }
   if (target === state.username) { el.addFriendHint.textContent = "Can't add yourself"; return; }
-
   el.addFriendHint.textContent = "Sending…";
-
   try {
     const res = await fetch(WORKER_URL + "/friend/request", {
       method: "POST",
@@ -1224,8 +1223,7 @@ async function sendFriendRequest() {
     el.addFriendHint.textContent = "✅ Request sent!";
     el.addFriendInput.value = "";
     showToast("Request sent!", "success");
-    play(el.sfxCorrect);
-    buzz(20);
+    play(el.sfxCorrect); buzz(20);
   } catch (e) {
     el.addFriendHint.textContent = "Network error";
   }
@@ -1246,13 +1244,7 @@ async function loadNotifications() {
     list.forEach(n => {
       const item = document.createElement("div");
       item.className = "notif-item";
-      item.innerHTML = `
-        <div class="notif-icon">🏆</div>
-        <div class="notif-body">
-          <div class="notif-title">${n.username} scored ${n.score}/${n.total}!</div>
-          <div class="notif-time">${n.date}</div>
-        </div>
-      `;
+      item.innerHTML = `<div class="notif-icon">🏆</div><div class="notif-body"><div class="notif-title">${n.username} scored ${n.score}/${n.total}!</div><div class="notif-time">${n.date}</div></div>`;
       el.notifPanel.appendChild(item);
     });
   } catch (e) {
@@ -1270,31 +1262,22 @@ async function checkNotificationsBadge() {
     const latest = list[0];
     const latestTime = new Date(latest.date).getTime();
     if (latestTime > lastSeen) {
-      if (el.bellBadge) {
-        el.bellBadge.textContent = list.length;
-        el.bellBadge.style.display = "flex";
-      }
+      if (el.bellBadge) { el.bellBadge.textContent = list.length; el.bellBadge.style.display = "flex"; }
       if (el.bellBtn) el.bellBtn.classList.add("has-new");
     }
   } catch (e) {}
 }
 
-/* ⬇️ NEXT CHUNK BELOW ⬇️ */
 /* ============================================================
-   CHALLENGES — LOGIC
+   CHALLENGES LOGIC
    ============================================================ */
 
-function openChallengeHub() {
-  play(el.sfxTap, false); buzz(12);
-  showScreen("challenges");
-}
+function openChallengeHub() { play(el.sfxTap, false); buzz(12); showScreen("challenges"); }
 
 async function createChallengeFromLastGame() {
   if (!state.loggedIn || !state.userId) { showToast("Sign in to create challenges.", "error"); return; }
   if (!state.pool || state.pool.length !== 20) { showToast("Play a game first.", "error"); return; }
-
   const questionIds = state.pool.map(q => makeQuestionId(q));
-
   try {
     const res = await fetch(WORKER_URL + "/challenge/create", {
       method: "POST",
@@ -1303,23 +1286,14 @@ async function createChallengeFromLastGame() {
     });
     const data = await res.json();
     if (!data.ok) { showToast(data.error || "Could not create challenge", "error"); return; }
-
     await fetch(WORKER_URL + "/challenge/submit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        challenge_id: data.challenge_id,
-        user_id: state.userId,
-        username: state.username,
-        score: state.score,
-        total: QUESTIONS_PER_GAME
-      })
+      body: JSON.stringify({ challenge_id: data.challenge_id, user_id: state.userId, username: state.username, score: state.score, total: QUESTIONS_PER_GAME })
     });
-
     currentChallenge = { id: data.challenge_id, code: data.code, question_ids: questionIds, creator_name: state.username };
     if (el.chCodeDisplay) el.chCodeDisplay.textContent = data.code;
-    play(el.sfxCorrect);
-    buzz([20, 40, 20]);
+    play(el.sfxCorrect); buzz([20, 40, 20]);
     showScreen("challengeCreated");
   } catch (e) { showToast("Network error", "error"); }
 }
@@ -1327,9 +1301,7 @@ async function createChallengeFromLastGame() {
 async function joinChallenge(code) {
   const clean = String(code || "").trim().toUpperCase();
   if (!clean) { showToast("Enter a code", "error"); return; }
-
   if (el.chJoinSubmit) { el.chJoinSubmit.disabled = true; el.chJoinSubmit.classList.add("busy"); }
-
   try {
     const res = await fetch(WORKER_URL + "/challenge/join", {
       method: "POST",
@@ -1342,46 +1314,25 @@ async function joinChallenge(code) {
       if (el.chJoinSubmit) { el.chJoinSubmit.disabled = false; el.chJoinSubmit.classList.remove("busy"); }
       return;
     }
-
     const idMap = new Map();
     QUESTIONS.forEach(q => idMap.set(makeQuestionId(q), q));
-
     const pool = [];
     data.challenge.question_ids.forEach(id => {
       const q = idMap.get(id);
       if (q) pool.push(shuffleQuestion(q));
     });
-
     if (pool.length !== 20) {
       showToast("Challenge questions unavailable.", "error");
       if (el.chJoinSubmit) { el.chJoinSubmit.disabled = false; el.chJoinSubmit.classList.remove("busy"); }
       return;
     }
-
-    currentChallenge = {
-      id: data.challenge.id,
-      code: data.challenge.code,
-      question_ids: data.challenge.question_ids,
-      creator_name: data.challenge.creator_name
-    };
-
-    state.pool = pool;
-    state.current = 0;
-    state.score = 0;
-    state.answered = false;
-    state.isDaily = false;
-    state.isChallenge = true;
-    state.difficulty = "pro";
-
-    if (el.currentDiff) {
-      el.currentDiff.textContent = "CHALLENGE";
-      el.currentDiff.style.background = "var(--purple)";
-    }
-
+    currentChallenge = { id: data.challenge.id, code: data.challenge.code, question_ids: data.challenge.question_ids, creator_name: data.challenge.creator_name };
+    state.pool = pool; state.current = 0; state.score = 0; state.answered = false;
+    state.isDaily = false; state.isChallenge = true; state.difficulty = "pro";
+    if (el.currentDiff) { el.currentDiff.textContent = "CHALLENGE"; el.currentDiff.style.background = "var(--purple)"; }
     refreshHomeUI();
     showScreen("game");
     renderQuestion();
-
     if (el.chJoinSubmit) { el.chJoinSubmit.disabled = false; el.chJoinSubmit.classList.remove("busy"); }
   } catch (e) {
     showToast("Network error", "error");
@@ -1394,10 +1345,8 @@ async function loadChallengeResults(challengeId) {
     const res = await fetch(WORKER_URL + "/challenge/results?challenge_id=" + challengeId);
     const data = await res.json();
     if (!data.ok) { showToast("Could not load results", "error"); return; }
-
     if (el.chResultCode) el.chResultCode.textContent = "Challenge " + data.challenge.code;
     if (el.chResultTitle) el.chResultTitle.textContent = data.scores.length > 1 ? "Results" : "Waiting for players…";
-
     if (el.chVsBox) {
       el.chVsBox.innerHTML = "";
       const best = data.scores[0];
@@ -1414,7 +1363,6 @@ async function loadChallengeResults(challengeId) {
         el.chVsBox.appendChild(side);
       });
     }
-
     play(el.sfxCorrect);
     showScreen("challengeResult");
   } catch (e) { showToast("Network error", "error"); }
@@ -1423,29 +1371,20 @@ async function loadChallengeResults(challengeId) {
 async function loadMyChallenges() {
   if (!state.username || !el.chMineList) return;
   el.chMineList.innerHTML = `<div class="lb-loading"><div class="lb-spinner"></div></div>`;
-
   try {
     const res = await fetch(WORKER_URL + "/challenge/mine?username=" + encodeURIComponent(state.username));
     const data = await res.json();
     const list = data.challenges || [];
-
     if (!list.length) {
       el.chMineList.innerHTML = `<div class="lb-empty">No challenges yet.<br>Create one after your next game.</div>`;
       return;
     }
-
     el.chMineList.innerHTML = "";
     list.forEach(c => {
       const item = document.createElement("div");
       item.className = "challenge-item";
       const date = new Date(c.created_at).toLocaleDateString();
-      item.innerHTML = `
-        <div>
-          <div class="challenge-item-title">${c.code}</div>
-          <div class="challenge-item-sub">by ${c.creator_name} · ${date}</div>
-        </div>
-        <span class="challenge-item-badge ${c.status === "open" ? "open" : ""}">${c.status.toUpperCase()}</span>
-      `;
+      item.innerHTML = `<div><div class="challenge-item-title">${c.code}</div><div class="challenge-item-sub">by ${c.creator_name} · ${date}</div></div><span class="challenge-item-badge ${c.status === "open" ? "open" : ""}">${c.status.toUpperCase()}</span>`;
       item.addEventListener("click", () => loadChallengeResults(c.id));
       el.chMineList.appendChild(item);
     });
@@ -1454,6 +1393,7 @@ async function loadMyChallenges() {
   }
 }
 
+/* ⬇️ NEXT CHUNK BELOW ⬇️ */
 /* ============================================================
    EVENT LISTENERS
    ============================================================ */
@@ -1540,6 +1480,7 @@ document.querySelectorAll(".coinshop-item").forEach(item => {
       state.coins += reward;
       saveAll();
       refreshHomeUI();
+      syncUserToServer();
       play(el.sfxCorrect);
       buzz([20, 40, 20]);
       showToast(`+${reward} coins!`, "success");
@@ -1547,7 +1488,6 @@ document.querySelectorAll(".coinshop-item").forEach(item => {
   });
 });
 
-// ⬇️ NEXT CHUNK BELOW ⬇️
 // Profile
 on("profile-back", "click", () => { play(el.sfxTap, false); showScreen("home"); });
 on("edit-profile", "click", () => {
@@ -1575,6 +1515,7 @@ on("save-profile-btn", "click", () => {
   state.country = country;
   saveAll();
   refreshHomeUI();
+  syncUserToServer();
   play(el.sfxCorrect);
   buzz([15, 30, 15]);
   showToast("Profile saved!", "success");
@@ -1655,6 +1596,7 @@ if (el.storeList) {
       state.coins += amount;
       saveAll();
       refreshHomeUI();
+      syncUserToServer();
       play(el.sfxCorrect);
       showToast(`+${amount} coins!`, "success");
     });
@@ -1704,16 +1646,7 @@ on("signout-btn", "click", () => {
 
 // Premium
 on("premium-back", "click", () => { play(el.sfxTap, false); showScreen("home"); });
-on("premium-buy", "click", () => {
-  play(el.sfxTap, false); buzz(20);
-  state.premium = true;
-  state.coins += 500;
-  saveAll();
-  refreshHomeUI();
-  play(el.sfxCorrect);
-  showToast("Premium unlocked! +500 coins", "success");
-  showScreen("profile");
-});
+on("premium-buy", "click", () => { play(el.sfxTap, false); buzz(20); doPremiumPurchase(); });
 on("premium-restore", "click", () => { play(el.sfxTap, false); showToast("Restore coming soon.", ""); });
 
 // Game hint
@@ -1723,6 +1656,7 @@ on("hint-btn", "click", () => {
   state.coins -= 30;
   saveAll();
   refreshHomeUI();
+  syncUserToServer();
   play(el.sfxTap, false); buzz(20);
   const q = state.pool[state.current];
   const buttons = el.answers.querySelectorAll(".answer-btn");
@@ -1746,6 +1680,7 @@ on("skip-btn", "click", () => {
   state.coins -= 50;
   saveAll();
   refreshHomeUI();
+  syncUserToServer();
   play(el.sfxTap, false); buzz(20);
   state.answered = true;
   advanceQuestion();
@@ -1755,11 +1690,8 @@ on("skip-btn", "click", () => {
 on("play-again", "click", () => {
   play(el.sfxTap, false);
   if (currentChallenge && state.pool && state.pool.length === 20 && state.isChallenge) {
-    state.current = 0;
-    state.score = 0;
-    state.answered = false;
-    state.isDaily = false;
-    state.isChallenge = true;
+    state.current = 0; state.score = 0; state.answered = false;
+    state.isDaily = false; state.isChallenge = true;
     refreshHomeUI();
     showScreen("game");
     renderQuestion();
@@ -1777,10 +1709,7 @@ on("share-btn", "click", () => {
   showScreen("share");
 });
 
-on("challenge-end-btn", "click", () => {
-  play(el.sfxTap, false); buzz(12);
-  createChallengeFromLastGame();
-});
+on("challenge-end-btn", "click", () => { play(el.sfxTap, false); buzz(12); createChallengeFromLastGame(); });
 
 // Share
 on("share-back", "click", () => { play(el.sfxTap, false); showScreen("end"); });
@@ -1796,6 +1725,7 @@ on("share-copy", "click", async () => {
 });
 on("share-image", "click", () => { play(el.sfxTap, false); showToast("Screenshot the card above and share it!", ""); });
 
+/* ⬇️ NEXT CHUNK BELOW ⬇️ */
 /* ============================================================
    CHALLENGE EVENTS
    ============================================================ */
@@ -1854,8 +1784,11 @@ on("ch-mine-back", "click", () => { play(el.sfxTap, false); showScreen("challeng
 window.addEventListener("popstate", () => goBack());
 history.pushState({ page: "home" }, "", location.href);
 
-window.addEventListener("load", () => {
+window.addEventListener("load", async () => {
   loadAll();
+
+  // Paystack return check
+  await checkPaystackCallback();
 
   setTimeout(() => {
     try {
@@ -1884,4 +1817,4 @@ if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("/sw.js").catch(() => {});
   });
-  }
+}
