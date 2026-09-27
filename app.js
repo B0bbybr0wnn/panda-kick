@@ -228,6 +228,9 @@ const el = {
   adOverlay:     $("ad-overlay"),
   adCountdown:   $("ad-countdown"),
   toast:         $("toast"),
+  payModal:      $("pay-modal"),
+  payModalClose: $("pay-modal-close"),
+  payCta:        $("pay-cta"),
 
   sfxCorrect:    $("sfx-correct"),
   sfxWrong:      $("sfx-wrong"),
@@ -547,42 +550,6 @@ document.addEventListener("visibilitychange", () => {
 
 window.addEventListener("blur", () => stopAllSounds());
 
-/* ============================================================
-   PAYSTACK CALLBACK
-   ============================================================ */
-
-async function checkPaystackCallback() {
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("paystack") !== "done") return;
-
-  const ref = localStorage.getItem("pk_last_paystack_ref");
-  if (!ref) return;
-
-  showToast("Verifying payment…", "");
-
-  try {
-    const res = await fetch(WORKER_URL + "/paystack/verify?reference=" + encodeURIComponent(ref));
-    const data = await res.json();
-
-    if (data.ok && data.premium) {
-      state.premium = true;
-      state.coins += 500;
-      saveAll();
-      refreshHomeUI();
-      syncUserToServer();
-      showToast("💎 Premium unlocked! +500 bonus coins", "success");
-      play(el.sfxCorrect);
-      buzz([30, 50, 30]);
-    } else {
-      showToast(data.error || "Payment not verified", "error");
-    }
-  } catch (e) {
-    showToast("Network error verifying payment", "error");
-  }
-
-  localStorage.removeItem("pk_last_paystack_ref");
-  window.history.replaceState({}, "", "/");
-}
 
 /* ⬇️ NEXT CHUNK BELOW ⬇️ */
 /* ============================================================
@@ -1140,27 +1107,11 @@ async function doSignin() {
   }
 }
 
-async function doPremiumPurchase() {
+function doPremiumPurchase() {
   if (!state.userId) { showToast("Sign in first", "error"); return; }
-  try {
-    showToast("Opening checkout…", "");
-    const res = await fetch(WORKER_URL + "/paystack/init", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user_id: state.userId,
-        username: state.username,
-        email: state.username + "@pandakick.app"
-      })
-    });
-    const data = await res.json();
-    if (!data.ok) { showToast(data.error || "Could not start payment", "error"); return; }
-
-    localStorage.setItem("pk_last_paystack_ref", data.reference);
-    window.location.href = data.authorization_url;
-  } catch (e) {
-    showToast("Network error", "error");
-  }
+  play(el.sfxTap, false);
+  buzz(12);
+  if (el.payModal) el.payModal.style.display = "flex";
 }
 
 async function loadLeaderboard(range = "all") {
@@ -1811,20 +1762,103 @@ on("ch-mine-back", "click", () => { play(el.sfxTap, false); showScreen("challeng
 /* ============================================================
    BACK BUTTON + INIT
    ============================================================ */
+/* ============================================================
+   PAYSTACK INLINE HANDLER
+   ============================================================ */
 
+if (el.payModalClose) {
+  el.payModalClose.addEventListener("click", () => {
+    play(el.sfxTap, false);
+    if (el.payModal) el.payModal.style.display = "none";
+  });
+}
+
+if (el.payModal) {
+  el.payModal.addEventListener("click", (e) => {
+    if (e.target === el.payModal) {
+      el.payModal.style.display = "none";
+    }
+  });
+}
+
+if (el.payCta) {
+  el.payCta.addEventListener("click", () => {
+    if (!state.userId || !state.username) {
+      showToast("Sign in first", "error");
+      return;
+    }
+    if (typeof PaystackPop === "undefined") {
+      showToast("Payment system loading… try again in 2 seconds", "error");
+      return;
+    }
+
+    play(el.sfxTap, false);
+    buzz(20);
+
+    const handler = PaystackPop.setup({
+      key: PAYSTACK_PUBLIC_KEY,
+      email: state.username + "@pandakick.app",
+      amount: PREMIUM_PRICE_NGN * 100,
+      currency: "NGN",
+      metadata: {
+        user_id: state.userId,
+        username: state.username,
+        custom_fields: [
+          {
+            display_name: "Username",
+            variable_name: "username",
+            value: state.username
+          }
+        ]
+      },
+      callback: function (response) {
+        if (el.payModal) el.payModal.style.display = "none";
+        verifyPaystackPayment(response.reference);
+      },
+      onClose: function () {
+        showToast("Payment cancelled", "");
+      }
+    });
+
+    handler.openIframe();
+  });
+}
+
+async function verifyPaystackPayment(reference) {
+  showToast("Verifying payment…", "");
+
+  try {
+    const res = await fetch(WORKER_URL + "/paystack/verify?reference=" + encodeURIComponent(reference));
+    const data = await res.json();
+
+    if (data.ok && data.premium) {
+      state.premium = true;
+      state.coins += 500;
+      saveAll();
+      refreshHomeUI();
+      syncUserToServer();
+      showToast("💎 Premium unlocked! +500 coins", "success");
+      play(el.sfxCorrect);
+      buzz([30, 50, 30]);
+      showScreen("profile");
+    } else {
+      showToast(data.error || "Payment not verified. Contact support.", "error");
+    }
+  } catch (e) {
+    showToast("Network error verifying payment", "error");
+  }
+}
 window.addEventListener("popstate", () => goBack());
 history.pushState({ page: "home" }, "", location.href);
 
 window.addEventListener("load", async () => {
   loadAll();
 
-  await checkPaystackCallback();
-
-  setTimeout(() => {
-    try {
-      if (el.sfxEnter) { el.sfxEnter.volume = 0.7; el.sfxEnter.play().catch(() => {}); }
-    } catch (e) {}
-  }, 800);
+setTimeout(() => {
+  try {
+    if (el.sfxEnter) { el.sfxEnter.volume = 0.7; el.sfxEnter.play().catch(() => {}); }
+  } catch (e) {}
+}, 800);
 
   setTimeout(() => {
     if (el.splash) el.splash.classList.add("hide");
